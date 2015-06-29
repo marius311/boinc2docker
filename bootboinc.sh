@@ -8,14 +8,16 @@ mkdir -p /root/shared
 mount -t vboxsf shared /root/shared
 cd /root/shared
 
-#any tgz files in this folder are considererd inputs
-#this will include the code to run the app itself, as well as any "parameters"
-tar zxvf *.tgz
+#if these are tgz files, untar them
+#ok if this fails
+tar zxvf boinc_app
+tar zxvf params
 
 #where the app will put results
 mkdir results
 
 #run the app
+chmod +x boinc_app
 ./boinc_app
 
 #tar up any results
@@ -24,4 +26,4 @@ tar czvf results.tgz results/*
 
 echo "${YELLOW}Finished BOINC app...${NORMAL}"
 
-shutdown -hP now
+shutdown -h now

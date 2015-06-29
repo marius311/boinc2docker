@@ -1,8 +1,0 @@
-<vbox_job>
-   <memory_size_mb>1024</memory_size_mb>
-   <os_name>Linux26_64</os_name>
-   <enable_isocontextualization>1</enable_isocontextualization>
-   <enable_cache_disk>1</enable_cache_disk>
-   <enable_shared_directory/>
-   <enable_network/>
-</vbox_job>

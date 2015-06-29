@@ -1,25 +1,37 @@
 <version>
+
    <file>
-      <physical_name>vboxwrapper_26105_x86_64-pc-linux-gnu</physical_name>
+
+      <!-- 
+         You will need to change this to the actual filename of your vboxwrapper
+         executable for each app_version, e.g. vboxwrapper_26105_x86_64-pc-linux-gnu, etc...
+      -->
+      <physical_name>vboxwrapper</physical_name>
+      <!-- -->
+
       <main_program/>
    </file>
+
    <file>
       <physical_name>vbox_job.xml</physical_name>
       <logical_name>vbox_job.xml</logical_name>      
       <copy_file/>
    </file>
+
    <file>
       <physical_name>vm_isocontext.iso</physical_name>
       <logical_name>vm_isocontext.iso</logical_name>      
-      <!-- <copy_file/> -->
-      <!-- <gzip/> -->
+      <copy_file/>
+      <gzip/>
    </file>
+
    <file>
       <physical_name>vm_cache.vdi</physical_name>
       <logical_name>vm_cache.vdi</logical_name>      
-      <!-- <copy_file/> -->
-      <!-- <gzip/> -->
+      <copy_file/> <!-- TODO: figure out persistence -->
+      <gzip/>
    </file>
 
    <dont_throttle/> 
+
 </version>
