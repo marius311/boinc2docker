@@ -17,7 +17,7 @@ The only requirement is a recent version of [Docker](https://www.docker.com/). T
 * Run `./make` to build the modified boot2docker ISO. (Note: this involves downloading a ~1Gb Docker image. In the future this ISO will be distributed)
 * Run `./cp2boinc <boinc-project-dir>` to copy the necessary files as well as the example boinc2docker app to your project directory. 
 * Create copies of `apps/boinc2docker/1.0/x86_64-pc-linux-gnu/` for any other app versions you would like to support. 
-* Download the `vboxwrapper` executables from [here](http://boinc.berkeley.edu/trac/wiki/VboxApps) and place them the folder for each app version.
+* Download the `vboxwrapper` executables from [here](http://boinc.berkeley.edu/trac/wiki/VboxApps#Premadevboxwrapperexecutables) and place them the folder for each app version.
 * Modify `version.xml` so that in each app version folder it points to the appropriate file name for `vboxwrapper`.
 * Add the following to your `project.xml`:
 ```xml
