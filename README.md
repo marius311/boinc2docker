@@ -54,3 +54,4 @@ TODO:
   * WISHLIST: Allow for more than 1? Can't see how that would work with current set up. 
 * Progress file
 * Allow multithreaded VM
+* Better logging
