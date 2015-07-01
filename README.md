@@ -27,8 +27,8 @@ The only requirement is a recent version of [Docker](https://www.docker.com/). T
   </app>
 ```
 * Run `/bin/update_versions`
-* Stage the boinc_app and necessary input files (e.g. `/bin/stage_file apps_boinc2docker/example/boinc2docker_example_app` and `/bin/stage_file apps_boinc2docker/example/params/boinc2docker_example_params1)
-* Submit the job (e.g. `bin/create_work --appname boinc2docker boinc2docker_example_boinc_app boinc2docker_example_params1)
+* Stage the boinc app and necessary input files (e.g. `/bin/stage_file apps_boinc2docker/example/boinc2docker_example_app` and `/bin/stage_file apps_boinc2docker/example/params/boinc2docker_example_params1`)
+* Submit the job (e.g. `bin/create_work --appname boinc2docker boinc2docker_example_boinc_app boinc2docker_example_params1`)
 
 
 Limitations 
