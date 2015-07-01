@@ -3,7 +3,7 @@ boinc2docker
 
 This package creates a [BOINC](https://boinc.berkeley.edu/) app which can run [Docker](https://www.docker.com/) images, greatly simplyfing the work it takes to develop and deploy applications for BOINC. It works by combining the power of [boot2docker](http://boot2docker.io/) and [vboxwrapper](http://boinc.berkeley.edu/trac/wiki/VboxApps).
 
-Once installed on your BOINC project, you simply create Docker images and push them to the free public Docker [hub](hub.docker.com) (or host your own Docker registry). When you submit jobs, your BOINC hosts will automatically download the images from there and run them. This removes the need to inject BOINC library calls into your app, to provide checkpointing (this is automatically handled by the Virtualbox wrapper), or to cross compile (you only need to install your app inside the Docker container, and it will run on any system which supports Virtualbox, including Linux, Windows, and OSX). 
+Once installed on your BOINC project, you simply create Docker images and push them to the free public Docker [hub](http://hub.docker.com) (or host your own Docker registry). When you submit jobs, your BOINC hosts will automatically download the images from there and run them. This removes the need to inject BOINC library calls into your app, to provide checkpointing (this is automatically handled by the Virtualbox wrapper), or to cross compile (you only need to install your app inside the Docker container, and it will run on any system which supports Virtualbox, including Linux, Windows, and OSX). 
 
 This project is currently in early development. Please do not use for production. 
 
