@@ -7,6 +7,7 @@
         <generated_locally/>
         <upload_when_present/>
         <max_nbytes>134217728</max_nbytes> <!-- 100Mb -->
+        <url><UPLOAD_URL/></url>        
     </file_info>
 
     <result>

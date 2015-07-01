@@ -7,9 +7,9 @@
 # 
 # "/root/shared/params" is the logical name of whichever input param file we select
 # 
-docker run -v /root/shared:/root/shared busybox echo /root/shared/params
+docker run -v /root/shared:/root/shared busybox echo "I'm running inside Docker!"
 
 
 # any regular linux commands can also be run as long as 
-# it works correctly inside the boot2docker VM
-echo "Done"
+# they work correctly inside the boot2docker VM
+echo "Docker app finished."
