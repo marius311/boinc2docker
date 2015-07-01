@@ -48,9 +48,9 @@ boot2docker is a compact (~25mb) bootable ISO based on TinyCore Linux which has 
 TODO:
 -----
 * Persistence drive. 
-** How exactly will vboxwrapper handle it? (will require some modifications to vboxwrapper)
-** How to recover if it becomes corrupt.
+  * How exactly will vboxwrapper handle it? (will require some modifications to vboxwrapper)
+  * How to recover if it becomes corrupt.
 * How to limit 1 task / host. 
-** WISHLIST: Allow for more than 1? Can't see how that would work with current set up. 
+  * WISHLIST: Allow for more than 1? Can't see how that would work with current set up. 
 * Progress file
 * Allow multithreaded VM
