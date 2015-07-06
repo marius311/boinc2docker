@@ -19,7 +19,7 @@ Requirements:
 
 If you're not on Linux the shell scripts may not work but are trivial to reproduce on other systems, just look inside. To install the app:
 
-* From `make_iso/` run `./make` to build the modified boot2docker ISO. (Note: this involves downloading a ~1Gb Docker image. In the future this ISO will be distributed)
+* Run `./make_iso.sh` to build the modified boot2docker ISO. (Note: this involves downloading a ~1Gb Docker image. In the future this ISO will be distributed)
 * Run `./cp2boinc <boinc-project-dir>` to copy the necessary files as well as the example boinc2docker app to your project directory. 
 * Create copies of `apps/boinc2docker/1.0/x86_64-pc-linux-gnu/` for any other app versions you would like to support. 
 * Compile the `vboxwrapper` executables and place them in the folder for each app version. (TODO: Update [precompiled](http://boinc.berkeley.edu/trac/wiki/VboxApps#Premadevboxwrapperexecutables) executables so the user can just download them from there.)
