@@ -6,3 +6,5 @@ if [ ! -n "$1" ] || [ "$#" -ne 1 ]; then
 fi
 
 cp -rf apps apps_boinc2docker templates $1
+tar zxvf apps/boinc2docker/1.0/x86_64-pc-linux-gnu/vm_cache.tar.gz -C $1/apps/boinc2docker/1.0/x86_64-pc-linux-gnu
+rm $1/apps/boinc2docker/1.0/x86_64-pc-linux-gnu/vm_cache.tar.gz
