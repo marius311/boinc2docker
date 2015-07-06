@@ -22,13 +22,12 @@
       <physical_name>vm_isocontext.iso</physical_name>
       <logical_name>vm_isocontext.iso</logical_name>      
       <copy_file/>
-      <gzip/>
    </file>
 
    <file>
       <physical_name>vm_cache.vdi</physical_name>
       <logical_name>vm_cache.vdi</logical_name>      
-      <copy_file/> <!-- TODO: figure out persistence -->
+      <copy_file/>
       <gzip/>
    </file>
 
