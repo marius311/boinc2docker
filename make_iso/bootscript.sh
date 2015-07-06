@@ -74,12 +74,12 @@ if [ -e /var/lib/boot2docker/bootsync.sh ]; then
 fi
 
 # Untar persistence /var/lib/docker and /var/lib/bootdocker
-echo "Loading persistence directories -------------------"
+echo "Loading persistence directories..."
 if [ -e /root/scratch/var_lib_docker.tar ]; then
-    tar zxvf /root/scratch/var_lib_docker.tar -C /
+    tar xf /root/scratch/var_lib_docker.tar -C /
 fi
 if [ -e /root/scratch/var_lib_boot2docker.tar ]; then
-    tar zxvf /root/scratch/var_lib_boot2docker.tar -C /
+    tar xf /root/scratch/var_lib_boot2docker.tar -C /
 fi
 
 # Launch Docker
@@ -105,3 +105,12 @@ fi
 
 # Launch xenserver-tools
 /etc/rc.d/xedaemon
+
+
+# Run BOINC app
+cd /root/shared
+chmod +x boinc_app
+./boinc_app
+
+# Shutdown
+shutdown -h now

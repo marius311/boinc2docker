@@ -9,12 +9,12 @@ if [ ! -e /root/.shutdown_ran ]; then
     /usr/local/etc/init.d/docker stop
 
     # Tar up persistence folders and save for next run
-    echo "Saving persistence directories -------------------"
-    tar czvf /root/scratch/var_lib_docker.tar /var/lib/docker/*
-    tar czvf /root/scratch/var_lib_boot2docker.tar /var/lib/boot2docker/*
+    echo "Saving persistence directories..."
+    tar cf /root/scratch/var_lib_docker.tar /var/lib/docker/*
+    tar cf /root/scratch/var_lib_boot2docker.tar /var/lib/boot2docker/*
 
     # Tar up results and log files
-    echo "Saving results -------------------"
+    echo "Saving results..."
     tar czvf /root/shared/results.tgz /root/shared/results/*
 
     touch /root/.shutdown_ran
