@@ -14,7 +14,7 @@ if [ ! -e /root/.shutdown_ran ]; then
 
     # Tar up results and log files
     echo "Saving results..."
-    tar czvf /root/shared/results.tgz /root/shared/results/* -C /root/shared/results
+    (cd /root/shared/results && tar czvf /root/shared/results.tgz *)
 
     touch /root/.shutdown_ran
 
