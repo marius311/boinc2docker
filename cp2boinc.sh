@@ -5,4 +5,4 @@ if [ ! -n "$1" ] || [ "$#" -ne 1 ]; then
     exit
 fi
 
-cp -rf apps apps_boinc2docker templates $1
+cp -Lrf apps apps_boinc2docker templates $1

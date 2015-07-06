@@ -74,12 +74,11 @@ if [ -e /var/lib/boot2docker/bootsync.sh ]; then
 fi
 
 # Untar persistence /var/lib/docker and /var/lib/bootdocker
-echo "Loading persistence directories..."
-if [ -e /root/scratch/var_lib_docker.tar ]; then
-    tar xf /root/scratch/var_lib_docker.tar -C /
-fi
-if [ -e /root/scratch/var_lib_boot2docker.tar ]; then
-    tar xf /root/scratch/var_lib_boot2docker.tar -C /
+if [ -e /root/scratch/boinc2docker_persistence.tar ]; then
+    echo "Loading persistence directories..."
+    tar xf /root/scratch/boinc2docker_persistence.tar -C /
+else
+    echo "No persistence directory found."
 fi
 
 # Launch Docker
@@ -106,6 +105,12 @@ fi
 # Launch xenserver-tools
 /etc/rc.d/xedaemon
 
+
+# Log persisted images
+echo "Images found in persistence directory:"
+echo "-------------------"
+docker images
+echo "-------------------"
 
 # Run BOINC app
 cd /root/shared
