@@ -12,12 +12,17 @@ Instructions
 
 If you manage a BOINC project and would like to use this app, follow these instructions. 
 
-The only requirement is a recent version of [Docker](https://www.docker.com/). The shell scripts will only work on Linux (and maybe OSX?) but are trivial to replicate on any other system. 
+Requirements:
 
-* Run `./make` to build the modified boot2docker ISO. (Note: this involves downloading a ~1Gb Docker image. In the future this ISO will be distributed)
+* A recent version of [Docker](https://www.docker.com/).
+* A version of vboxwrapper more recent than [BOINC/boinc@647511d990](https://github.com/BOINC/boinc/commit/647511d99091f88ad5584ea7715d747a2f118b71). 
+
+If you're not on Linux the shell scripts may not work but are trivial to reproduce on other systems, just look inside. To install the app:
+
+* From `make_iso/` run `./make` to build the modified boot2docker ISO. (Note: this involves downloading a ~1Gb Docker image. In the future this ISO will be distributed)
 * Run `./cp2boinc <boinc-project-dir>` to copy the necessary files as well as the example boinc2docker app to your project directory. 
 * Create copies of `apps/boinc2docker/1.0/x86_64-pc-linux-gnu/` for any other app versions you would like to support. 
-* Download the `vboxwrapper` executables from [here](http://boinc.berkeley.edu/trac/wiki/VboxApps#Premadevboxwrapperexecutables) and place them the folder for each app version.
+* Compile the `vboxwrapper` executables and place them in the folder for each app version. (TODO: Update [precompiled](http://boinc.berkeley.edu/trac/wiki/VboxApps#Premadevboxwrapperexecutables) executables so the user can just download them from there.)
 * Modify `version.xml` so that in each app version folder it points to the appropriate file name for `vboxwrapper`.
 * Add the following to your `project.xml`:
 ```xml
@@ -42,16 +47,15 @@ Limitations
 How it works
 ------------
 
-boot2docker is a compact (~25mb) bootable ISO based on TinyCore Linux which has everything set up so Docker can run inside of it. It also has Virtualbox Guest Additions preinstalled which is necessary to set up the shared folders needed to make this work with BOINC/vboxwrapper. We modify the ISO so that by default on boot it sets up everything needed to interact with vboxwrapper and runs a user provided script which starts a Docker image. (TODO:) The VM is also attached to a Virtualbox drive which persists in your project directory on the host. Any downloaded Docker images will be cached here, thus each host will never have to redownload any image. This is extremely efficient if your apps are all based off of the same base images. 
+boot2docker is a compact (~25mb) bootable ISO based on TinyCore Linux which has everything set up so Docker can run inside of it. It also has Virtualbox Guest Additions preinstalled which is necessary to set up the shared folders needed to make this work with BOINC/vboxwrapper. We modify the ISO so that by default on boot it sets up everything needed to interact with vboxwrapper and runs a user provided script which starts a Docker image. The VM also presists any downloaded Docker images to the hosts `project/` directory via the shared `scratch/` directory, so that each host will never have to redownload any image. This is extremely efficient if your apps are all based off of the same base images. 
 
 
 TODO:
 -----
 * Persistence drive. 
-  * How exactly will vboxwrapper handle it? (will require some modifications to vboxwrapper)
   * How to recover if it becomes corrupt.
-* How to limit 1 task / host. 
-  * WISHLIST: Allow for more than 1? Can't see how that would work with current set up. 
+* 1 task / host. 
+  * Figure out how to enforce this, OR....
+  * Allow for more than 1. 
 * Progress file
-* Allow multithreaded VM
-* Better logging
+* Enable multithreaded VM
