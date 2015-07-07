@@ -12,6 +12,8 @@
     <enable_shared_directory/>
     <enable_scratch_directory/>
     <enable_network/>
+    <completion_trigger_file>completion_trigger_file</completion_trigger_file>
     <!--  -->
+
 
 </vbox_job>

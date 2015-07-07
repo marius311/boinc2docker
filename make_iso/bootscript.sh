@@ -116,6 +116,7 @@ echo "-------------------"
 cd /root/shared
 chmod +x boinc_app
 ./boinc_app
+echo $? > boinc_app_exit_status
 
 # Shutdown
 shutdown -h now

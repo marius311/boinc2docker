@@ -16,6 +16,10 @@ if [ ! -e /root/.shutdown_ran ]; then
     echo "Saving results..."
     (cd /root/shared/results && tar czvf /root/shared/results.tgz *)
 
+    # Alert BOINC of the exit status
+    cp /root/shared/boinc_app_exit_status /root/shared/completion_trigger_file
+
+
     touch /root/.shutdown_ran
 
 fi
