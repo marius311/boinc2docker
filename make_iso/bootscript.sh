@@ -23,8 +23,9 @@ mkdir -p /var/lib/boot2docker/log
 # Add any custom certificate chains for secure private registries
 /etc/rc.d/install-ca-certs
 
-# import settings from profile (or unset them)
-test -f "/var/lib/boot2docker/profile" && . "/var/lib/boot2docker/profile"
+# Disable TLS which is safe since our VM never gets attached to the outside world
+echo "DOCKER_TLS=no" > "/var/lib/boot2docker/profile"
+. "/var/lib/boot2docker/profile"
 
 # set the hostname
 /etc/rc.d/hostname
@@ -53,8 +54,8 @@ fi
 # Automount Shared Folders (VirtualBox, etc.)
 /etc/rc.d/automount-shares
 
-# Configure SSHD
-/etc/rc.d/sshd
+# We won't need to SSH into this machine ever
+# /etc/rc.d/SSHD
 
 # Launch ACPId
 /etc/rc.d/acpid
