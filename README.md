@@ -21,7 +21,7 @@ If you're not on Linux the shell scripts may not work but are trivial to reprodu
 
 * Run `./make_iso.sh` to build the modified boot2docker ISO. (Note: this involves downloading a ~1Gb Docker image. In the future this ISO will be distributed)
 * Run `./cp2boinc <boinc-project-dir>` to copy the necessary files as well as the example boinc2docker app to your project directory. 
-* Create copies of `apps/boinc2docker/1.0/x86_64-pc-linux-gnu/` for any other app versions you would like to support. 
+* Create copies of `apps/boinc2docker/1.0/x86_64-pc-linux-gnu__vbox64_mt/` for any other app versions you would like to support. 
 * Compile the `vboxwrapper` executables and place them in the folder for each app version. (TODO: Update [precompiled](http://boinc.berkeley.edu/trac/wiki/VboxApps#Premadevboxwrapperexecutables) executables so the user can just download them from there.)
 * Modify `version.xml` so that in each app version folder it points to the appropriate file name for `vboxwrapper`.
 * Add the following to your `project.xml`:
@@ -31,6 +31,7 @@ If you're not on Linux the shell scripts may not work but are trivial to reprodu
     <user_friendly_name>boinc2docker</user_friendly_name>
   </app>
 ```
+* Add the contents of `plan_class_spec.xml` to your existing one (or simply copy this over if you didn't previously have one)
 * Run `/bin/update_versions`
 * Stage the boinc app and necessary input files (e.g. `/bin/stage_file apps_boinc2docker/example/boinc2docker_example_app` and `/bin/stage_file apps_boinc2docker/example/params/boinc2docker_example_params1`)
 * Submit the job (e.g. `bin/create_work --appname boinc2docker boinc2docker_example_boinc_app boinc2docker_example_params1`)
@@ -58,4 +59,3 @@ TODO:
   * Figure out how to enforce this, OR....
   * Allow for more than 1. 
 * Progress file
-* Enable multithreaded VM
