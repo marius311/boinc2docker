@@ -23,14 +23,13 @@ If you manage a BOINC project and would like to use boinc2docker, follow these i
 Requirements:
 
 * A recent version of [Docker](https://www.docker.com/).
-* A version of vboxwrapper more recent than [BOINC/boinc@647511d990](https://github.com/BOINC/boinc/commit/647511d99091f88ad5584ea7715d747a2f118b71). 
 
 boinc2docker is a regular BOINC application. To install,
 
 * Download `vm_isocontext.iso` from the [latest release](https://github.com/marius311/boinc2docker/releases) of boinc2docker and place it in `apps/boinc2docker/1.0/x86_64-pc-linux-gnu__vbox64_mt` (alternatively build the ISO yourself by running `./make_iso.sh`, this requires a ~1GB download). 
 * Run `./cp2boinc <boinc-project-dir>` to copy the necessary files and example boinc2docker app to your project directory. 
 * Create copies of `apps/boinc2docker/1.0/x86_64-pc-linux-gnu__vbox64_mt/` with appropriate names for other app versions you would like to support. 
-* Compile the `vboxwrapper` executables and place them in the folder for each app version. (TODO: Update [precompiled](http://boinc.berkeley.edu/trac/wiki/VboxApps#Premadevboxwrapperexecutables) executables so the user can just download them from there.)
+* Download the `vboxwrapper` executables from [here](http://boinc.berkeley.edu/dl) and place them in each app version folder (note: you need version >= 26169)
 * Modify `version.xml` so that in each app version folder it points to the appropriate file name for `vboxwrapper`.
 * Add the contents of `project.xml` and `plan_class_spec.xml` to these same files in your project directory (or create them if they don't exist).
 * Run `/bin/update_versions`
