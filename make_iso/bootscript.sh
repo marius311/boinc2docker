@@ -24,8 +24,8 @@ mkdir -p /var/lib/boot2docker/log
 /etc/rc.d/install-ca-certs
 
 # Disable TLS which is safe since our VM never gets attached to the outside world
-echo "DOCKER_TLS=no" > "/var/lib/boot2docker/profile"
-. "/var/lib/boot2docker/profile"
+DOCKER_TLS=no
+
 
 # set the hostname
 /etc/rc.d/hostname
@@ -95,16 +95,19 @@ fi
 # disabled - this script was written assuming bash, which we no longer have.
 #/etc/rc.d/automated_script.sh
 
+
+# Only running this in VBox so don't need these:
+
 # Run Hyper-V KVP Daemon
-if modprobe hv_utils &> /dev/null; then
-    /usr/sbin/hv_kvp_daemon
-fi
+# if modprobe hv_utils &> /dev/null; then
+#     /usr/sbin/hv_kvp_daemon
+# fi
 
 # Launch vmware-tools
-/etc/rc.d/vmtoolsd
+# /etc/rc.d/vmtoolsd
 
 # Launch xenserver-tools
-/etc/rc.d/xedaemon
+# /etc/rc.d/xedaemon
 
 
 # Log persisted images
