@@ -26,15 +26,19 @@ Requirements:
 
 boinc2docker is a regular BOINC application. To install,
 
-* Download `vm_isocontext.iso` from the [latest release](https://github.com/marius311/boinc2docker/releases) of boinc2docker and place it in `apps/boinc2docker/1.0/x86_64-pc-linux-gnu__vbox64_mt` (alternatively build the ISO yourself by running `./make_iso.sh`, this requires a ~1GB download). 
+* *Optional*: If you want build your own boinc2docker ISO, run `make_iso.sh` (note this requires a ~1Gb download).
+* Run `./setup_versions.sh <vboxwrapper-version>` where `<vboxwrapper-version>` is a recent vboxwrapper version, e.g. 26169 (see http://boinc.berkeley.edu/dl/ for the latest versions). This script:
+    * Creates the Linux, Windows, and Mac OS app versions from `apps/boinc2docker/1.0/example`
+    * Downloads the necessary vboxwrapper executables
+    * If no boinc2docker ISO was built, downloads the premade version
 * Run `./cp2boinc <boinc-project-dir>` to copy the necessary files and example boinc2docker app to your project directory. 
-* Create copies of `apps/boinc2docker/1.0/x86_64-pc-linux-gnu__vbox64_mt/` with appropriate names for other app versions you would like to support. 
-* Download the `vboxwrapper` executables from [here](http://boinc.berkeley.edu/dl) and place them in each app version folder (note: you need version >= 26169)
-* Modify `version.xml` so that in each app version folder it points to the appropriate file name for `vboxwrapper`.
 * Add the contents of `project.xml` and `plan_class_spec.xml` to these same files in your project directory (or create them if they don't exist).
-* Run `/bin/update_versions`
-* Stage the boinc app and necessary input files (e.g. `/bin/stage_file apps_boinc2docker/example/boinc2docker_example_app` and `/bin/stage_file apps_boinc2docker/example/params/boinc2docker_example_params1`)
-* Submit the job (e.g. `bin/create_work --appname boinc2docker boinc2docker_example_boinc_app boinc2docker_example_params1`)
+* Run `bin/update_versions`
+* Stage the boinc app and necessary input files e.g.
+    * `/bin/stage_file apps_boinc2docker/example/boinc2docker_example_app` 
+    * `/bin/stage_file apps_boinc2docker/example/params/boinc2docker_example_params1`
+* Submit the job, e.g. 
+    * `bin/create_work --appname boinc2docker boinc2docker_example_boinc_app boinc2docker_example_params1`
 
 
 Limitations 
