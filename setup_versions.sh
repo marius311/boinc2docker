@@ -9,6 +9,11 @@ fi
 
 cd apps/boinc2docker/1.0
 
+if [ ! -f example/vm_isocontext.iso ]; then
+    echo "Downloading boinc2docker ISO..."
+    wget $(curl -s https://api.github.com/repos/marius311/boinc2docker/releases | grep browser_download_url | head -n 1 | cut -d '"' -f 4) -O example/vm_isocontext.iso
+fi
+
 for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do 
     cp -r example ${platform}__vbox64_mt &&
     cd ${platform}__vbox64_mt && 
