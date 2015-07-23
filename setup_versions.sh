@@ -17,11 +17,15 @@ fi
 for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do 
     cp -r example ${platform}__vbox64_mt &&
     cd ${platform}__vbox64_mt && 
-    wget http://boinc.berkeley.edu/dl/vboxwrapper_$1_${platform}.zip && 
     vboxwrapper=vboxwrapper_$1_${platform} && 
     if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi &&
-    files=$(unzip -j *.zip | grep inflating | awk '{print $NF}') &&
-    rm ${files/$vboxwrapper/} *.zip &&
+    if [[ ! -f vboxwrapper_$1_${platform}.zip ]]; then
+        wget http://boinc.berkeley.edu/dl/vboxwrapper_$1_${platform}.zip
+    fi &&
+    if [[ ! -f $vboxwrapper ]]; then
+        files=$(unzip -j *.zip | grep inflating | awk '{print $NF}') &&
+        rm ${files/$vboxwrapper/} *.zip
+    fi &&
     sed -E -i "s/<physical_name>vboxwrapper<\/physical_name>/<physical_name>$vboxwrapper<\/physical_name>/g" version.xml &&
     cd ..
 done
