@@ -11,8 +11,8 @@ cd apps/boinc2docker/1.0
 
 if [ ! -f example/vm_isocontext.iso ]; then
     echo "Downloading boinc2docker ISO..."
-    wget $(curl -s https://api.github.com/repos/marius311/boinc2docker/releases | grep browser_download_url | head -n 1 | cut -d '"' -f 4) -O example/vm_isocontext.iso
-fi
+    curl $(curl -s https://api.github.com/repos/marius311/boinc2docker/releases | grep browser_download_url | head -n 1 | cut -d '"' -f 4) -Lo example/vm_isocontext.iso
+fi &&
 
 for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do 
     cp -r example ${platform}__vbox64_mt &&
@@ -20,7 +20,9 @@ for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do
     vboxwrapper=vboxwrapper_$1_${platform} && 
     if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi &&
     if [[ ! -f vboxwrapper_$1_${platform}.zip ]]; then
-        wget http://boinc.berkeley.edu/dl/vboxwrapper_$1_${platform}.zip
+        file=http://boinc.berkeley.edu/dl/vboxwrapper_$1_${platform}.zip
+        echo "Downloading $file..."
+        curl -LO $file
     fi &&
     if [[ ! -f $vboxwrapper ]]; then
         files=$(unzip -j *.zip | grep inflating | awk '{print $NF}') &&
