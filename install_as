@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# if [ ! -n "$1" ] || [ "$#" -ne 1 ]; then
+#     echo "Usage: ./install_as <projdir> <appname> <versionnum>" <
+#     exit
+# fi
+
+PROJDIR=$1
+APPNAME=$2
+VER=$3
+
+APPFOLDER=$PROJDIR/apps/$APPNAME/$VER
+mkdir -p $APPFOLDER && 
+cp -Lrf apps/boinc2docker/1.0/{x86_64-pc-linux-gnu,windows_x86_64,x86_64-apple-darwin}__vbox64_mt $APPFOLDER &&
+
+for type in "in" "out"; do 
+    cp -f templates/boinc2docker_$type $PROJDIR/templates/${APPNAME}_$type
+done

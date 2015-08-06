@@ -15,16 +15,17 @@ if [ ! -f example/vm_isocontext.iso ]; then
 fi &&
 
 for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do 
-    cp -r example ${platform}__vbox64_mt &&
+    mkdir -p ${platform}__vbox64_mt &&
+    cp -r example/* ${platform}__vbox64_mt &&
     cd ${platform}__vbox64_mt && 
     vboxwrapper=vboxwrapper_$1_${platform} && 
     if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi &&
-    if [[ ! -f vboxwrapper_$1_${platform}.zip ]]; then
-        file=http://boinc.berkeley.edu/dl/vboxwrapper_$1_${platform}.zip
-        echo "Downloading $file..."
-        curl -LO $file
-    fi &&
     if [[ ! -f $vboxwrapper ]]; then
+        if [[ ! -f vboxwrapper_$1_${platform}.zip ]]; then
+            file=http://boinc.berkeley.edu/dl/vboxwrapper_$1_${platform}.zip
+            echo "Downloading $file..."
+            curl -LO $file
+        fi &&
         files=$(unzip -j *.zip | grep inflating | awk '{print $NF}') &&
         rm ${files/$vboxwrapper/} *.zip
     fi &&
