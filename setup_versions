@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 if [ ! -n "$1" ] || [ "$#" -ne 1 ]; then
     echo "Usage: ./setup_versions <vboxwrapper-version>"
     echo "Downloads the vboxwrapper executables and sets up the app version folders."
@@ -12,23 +14,23 @@ cd apps/boinc2docker/1.0
 if [ ! -f example/vm_isocontext.iso ]; then
     echo "Downloading boinc2docker ISO..."
     curl $(curl -s https://api.github.com/repos/marius311/boinc2docker/releases | grep browser_download_url | head -n 1 | cut -d '"' -f 4) -Lo example/vm_isocontext.iso
-fi &&
+fi
 
 for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do 
-    mkdir -p ${platform}__vbox64_mt &&
-    cp -r example/* ${platform}__vbox64_mt &&
-    cd ${platform}__vbox64_mt && 
-    vboxwrapper=vboxwrapper_$1_${platform} && 
-    if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi &&
+    mkdir -p ${platform}__vbox64_mt
+    cp -r example/* ${platform}__vbox64_mt
+    cd ${platform}__vbox64_mt 
+    vboxwrapper=vboxwrapper_$1_${platform} 
+    if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi
     if [[ ! -f $vboxwrapper ]]; then
         if [[ ! -f vboxwrapper_$1_${platform}.zip ]]; then
             file=http://boinc.berkeley.edu/dl/vboxwrapper_$1_${platform}.zip
             echo "Downloading $file..."
             curl -LO $file
-        fi &&
-        files=$(unzip -j *.zip | grep inflating | awk '{print $NF}') &&
+        fi
+        files=$(unzip -j *.zip | grep inflating | awk '{print $NF}')
         rm ${files/$vboxwrapper/} *.zip
-    fi &&
-    sed -E -i "s/<physical_name>vboxwrapper<\/physical_name>/<physical_name>$vboxwrapper<\/physical_name>/g" version.xml &&
+    fi
+    sed -E -i "s/<physical_name>vboxwrapper<\/physical_name>/<physical_name>$vboxwrapper<\/physical_name>/g" version.xml
     cd ..
 done
