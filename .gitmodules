@@ -1,0 +1,4 @@
+[submodule "boot2docker"]
+	path = boot2docker
+	url = https://github.com/marius311/boot2docker.git
+	branch = boinc2docker
