@@ -10,16 +10,17 @@ set -e
 PROJDIR=$1
 APPNAME=$2
 VER=$3
+VBOXJOB=$4
 
 APPFOLDER=$PROJDIR/apps/$APPNAME/$VER
 mkdir -p $APPFOLDER 
 
 for appver in "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin"; do
     cp -Lrf apps/boinc2docker/1.0/${appver}__vbox64_mt $APPFOLDER 
-    if [ -z $4 ]; then
+    if [ -z $VBOXJOB ]; then
         mv $APPFOLDER/${appver}__vbox64_mt/{,${APPNAME}_}vbox_job.xml 
     else
-        cp $4 $APPFOLDER/${appver}__vbox64_mt/${APPNAME}_vbox_job.xml 
+        cp $VBOXJOB $APPFOLDER/${appver}__vbox64_mt/${APPNAME}_vbox_job.xml 
     fi
     sed -E -i "s/<physical_name>vbox_job.xml<\/physical_name>/<physical_name>${APPNAME}_vbox_job.xml<\/physical_name>/g" $APPFOLDER/${appver}__vbox64_mt/version.xml
 done

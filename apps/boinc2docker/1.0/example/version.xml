@@ -1,14 +1,7 @@
 <version>
 
    <file>
-
-      <!-- 
-         You will need to change this to the actual filename of your vboxwrapper
-         executable for each app_version, e.g. vboxwrapper_26105_x86_64-pc-linux-gnu, etc...
-      -->
       <physical_name>vboxwrapper</physical_name>
-      <!-- -->
-
       <main_program/>
    </file>
 
