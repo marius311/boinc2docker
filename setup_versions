@@ -2,8 +2,8 @@
 
 set -e
 
-if [ ! -n "$1" ] || [ "$#" -ne 1 ]; then
-    echo "Usage: ./setup_versions <vboxwrapper-version>"
+if [ "$#" -ne 3 ]; then
+    echo "Usage: ./setup_versions <linux-vboxwrapper-version> <windows-vboxwrapper-version> <mac-vboxwrapper-version>"
     echo "Downloads the vboxwrapper executables and sets up the app version folders."
     echo "See http://boinc.berkeley.edu/dl/ for the latest vboxwrapper version."
     exit
@@ -33,4 +33,5 @@ for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do
     fi
     sed -E -i "s/<physical_name>vboxwrapper<\/physical_name>/<physical_name>$vboxwrapper<\/physical_name>/g" version.xml
     cd ..
+    shift 1
 done
