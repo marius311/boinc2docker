@@ -9,16 +9,19 @@ if [ "$#" -ne 3 ]; then
     exit
 fi
 
+TAG=$(git describe --tags --abbrev=0 2>/dev/null || cat .tag)
+
 cd apps/boinc2docker/1.0
 
-if [ ! -f example/vm_isocontext.iso ]; then
+if [ ! -f example/vm_isocontext_${TAG}.iso ]; then
     echo "Downloading boinc2docker ISO..."
-    curl $(curl -s https://api.github.com/repos/marius311/boinc2docker/releases | grep browser_download_url | head -n 1 | cut -d '"' -f 4) -Lo example/vm_isocontext.iso
+    curl -L https://github.com/marius311/boinc2docker/releases/download/${TAG}/vm_isocontext.iso > example/vm_isocontext_${TAG}.iso
 fi
 
 for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do 
     mkdir -p ${platform}__vbox64_mt
-    cp -r example/* ${platform}__vbox64_mt
+    cp example/version.xml example/vm_isocontext_${TAG}.iso ${platform}__vbox64_mt
+    cp example/vm_cache.vdi ${platform}__vbox64_mt/vm_cache_${TAG}.vdi
     cd ${platform}__vbox64_mt 
     vboxwrapper=vboxwrapper_$1_${platform} 
     if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi
@@ -31,7 +34,8 @@ for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do
         files=$(unzip -j *.zip | grep inflating | awk '{print $NF}')
         rm ${files/$vboxwrapper/} *.zip
     fi
-    sed -E -i "s/<physical_name>vboxwrapper<\/physical_name>/<physical_name>$vboxwrapper<\/physical_name>/g" version.xml
+    sed -i "s/%vboxwrapper%/$vboxwrapper/g" version.xml 
+    sed -i "s/%tag%/$TAG/g" version.xml
     cd ..
     shift 1
 done

@@ -3,6 +3,6 @@
 set -e
 
 docker build -t boinc2docker boot2docker
-TARGET=apps/boinc2docker/1.0/example/vm_isocontext.iso
+TARGET=apps/boinc2docker/1.0/example/vm_isocontext_$(git describe --tags --abbrev=0).iso
 docker run --rm boinc2docker > $TARGET
 echo "Created $TARGET"

@@ -10,19 +10,18 @@ set -e
 PROJDIR=$1
 APPNAME=$2
 VER=$3
-VBOXJOB=$4
+VBOXJOB_IN=$4
 
-APPFOLDER=$PROJDIR/apps/$APPNAME/$VER
-mkdir -p $APPFOLDER 
+APPROOT=$PROJDIR/apps/$APPNAME/$VER
+mkdir -p $APPROOT 
 
-for appver in "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin"; do
-    cp -Lrf apps/boinc2docker/1.0/${appver}__vbox64_mt $APPFOLDER 
-    if [ -z $VBOXJOB ]; then
-        mv $APPFOLDER/${appver}__vbox64_mt/{,${APPNAME}_}vbox_job.xml 
-    else
-        cp $VBOXJOB $APPFOLDER/${appver}__vbox64_mt/${APPNAME}_vbox_job.xml 
-    fi
-    sed -E -i "s/<physical_name>vbox_job.xml<\/physical_name>/<physical_name>${APPNAME}_vbox_job.xml<\/physical_name>/g" $APPFOLDER/${appver}__vbox64_mt/version.xml
+for PLATFORM in "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin"; do
+    APPFOLDER=$APPROOT/${PLATFORM}__vbox64_mt
+    cp -Lrf apps/boinc2docker/1.0/${PLATFORM}__vbox64_mt $APPROOT 
+    VBOXJOB_OUT=$APPFOLDER/${APPNAME}_${VER}_vbox_job.xml 
+    if [ -z $VBOXJOB_IN ]; then VBOXJOB_IN=apps/boinc2docker/1.0/example/vbox_job.xml; fi
+    cp $VBOXJOB_IN $VBOXJOB_OUT
+    sed -i "s/%vbox_job%/$(basename $VBOXJOB_OUT)/g" $APPFOLDER/version.xml
 done
 
 for type in "in" "out"; do 
