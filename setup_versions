@@ -9,7 +9,7 @@ if [ "$#" -ne 3 ]; then
     exit
 fi
 
-TAG=$(git describe --tags --abbrev=0 2>/dev/null || cat .tag)
+TAG=$(git describe --tags --abbrev=0)
 
 cd apps/boinc2docker/1.0
 
