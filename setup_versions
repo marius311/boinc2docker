@@ -2,40 +2,36 @@
 
 set -e
 
-if [ "$#" -ne 3 ]; then
-    echo "Usage: ./setup_versions <linux-vboxwrapper-version> <windows-vboxwrapper-version> <mac-vboxwrapper-version>"
-    echo "Downloads the vboxwrapper executables and sets up the app version folders."
-    echo "See http://boinc.berkeley.edu/dl/ for the latest vboxwrapper version."
-    exit
-fi
-
 TAG=$(git describe --tags --abbrev=0)
+
+TAGURL=https://github.com/marius311/boinc2docker/releases/download/${TAG}
 
 cd apps/boinc2docker/1.0
 
-if [ ! -f example/vm_isocontext_${TAG}.iso ]; then
-    echo "Downloading boinc2docker ISO..."
-    curl -L https://github.com/marius311/boinc2docker/releases/download/${TAG}/vm_isocontext.iso > example/vm_isocontext_${TAG}.iso
-fi
+ensure_file() {
+    test -f $1 && echo "Found locally: $1" || (echo "Downloading $1..."; curl -L $2 -o $1)
+    grep '{"error":"Not Found"}' $1 && { echo "Download failed: $1"; rm $1; exit 1; } || :
+}
 
-for platform in x86_64-pc-linux-gnu windows_x86_64 x86_64-apple-darwin; do 
-    mkdir -p ${platform}__vbox64_mt
-    cp example/version.xml example/vm_isocontext_${TAG}.iso ${platform}__vbox64_mt
-    cp example/vm_cache.vdi ${platform}__vbox64_mt/vm_cache_${TAG}.vdi
-    cd ${platform}__vbox64_mt 
-    vboxwrapper=vboxwrapper_$1_${platform} 
+ensure_file example/vm_isocontext_${TAG}.iso ${TAGURL}/vm_isocontext_${TAG}.iso
+
+platforms=(            "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin")
+vboxwrapper_versions=( "00d1381"             "26171"          "26171"              )
+
+for i in 0 1 2; do 
+    platform=${platforms[i]}
+    platformdir=${platform}__vbox64_mt
+    vboxwrapper_version=${vboxwrapper_versions[i]}
+
+    # echo "Doing $platform $vboxwrapper_version"
+
+    mkdir -p ${platformdir}
+    cp example/version.xml example/vm_isocontext_${TAG}.iso ${platformdir}
+    cp example/vm_cache.vdi ${platformdir}/vm_cache_${TAG}.vdi
+    vboxwrapper=vboxwrapper_${vboxwrapper_version}_${platform} 
     if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi
-    if [[ ! -f $vboxwrapper ]]; then
-        if [[ ! -f vboxwrapper_$1_${platform}.zip ]]; then
-            file=http://boinc.berkeley.edu/dl/vboxwrapper_$1_${platform}.zip
-            echo "Downloading $file..."
-            curl -LO $file
-        fi
-        files=$(unzip -j *.zip | grep inflating | awk '{print $NF}')
-        rm ${files/$vboxwrapper/} *.zip
-    fi
-    sed -i "s/%vboxwrapper%/$vboxwrapper/g" version.xml 
-    sed -i "s/%tag%/$TAG/g" version.xml
-    cd ..
-    shift 1
+    ensure_file example/$vboxwrapper ${TAGURL}/$vboxwrapper
+    cp example/$vboxwrapper $platformdir
+    sed -i "s/%vboxwrapper%/$vboxwrapper/g" ${platformdir}/version.xml 
+    sed -i "s/%tag%/$TAG/g" ${platformdir}/version.xml
 done
