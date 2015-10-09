@@ -8,12 +8,13 @@
 
     <!-- These are all needed for boinc2docker  -->
     <enable_isocontextualization>1</enable_isocontextualization>
-    <enable_cache_disk>1</enable_cache_disk>
     <enable_shared_directory/>
     <enable_scratch_directory/>
     <enable_network/>
     <completion_trigger_file>completion_trigger_file</completion_trigger_file>
+    <disable_automatic_checkpoints/>
     <!--  -->
+
 
 
 </vbox_job>

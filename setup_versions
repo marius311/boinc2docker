@@ -23,8 +23,6 @@ for i in 0 1 2; do
     platformdir=${platform}__vbox64_mt
     vboxwrapper_version=${vboxwrapper_versions[i]}
 
-    # echo "Doing $platform $vboxwrapper_version"
-
     mkdir -p ${platformdir}
     cp example/version.xml example/vm_isocontext_${TAG}.iso ${platformdir}
     cp example/vm_cache.vdi ${platformdir}/vm_cache_${TAG}.vdi
