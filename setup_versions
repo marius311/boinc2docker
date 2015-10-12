@@ -4,8 +4,6 @@ set -e
 
 TAG=$(git describe --tags --abbrev=0)
 
-TAGURL=https://github.com/marius311/boinc2docker/releases/download/${TAG}
-
 cd apps/boinc2docker/1.0
 
 ensure_file() {
@@ -13,23 +11,24 @@ ensure_file() {
     grep '{"error":"Not Found"}' $1 && { echo "Download failed: $1"; rm $1; exit 1; } || :
 }
 
-ensure_file example/vm_isocontext_${TAG}.iso ${TAGURL}/vm_isocontext_${TAG}.iso
+RELEASE=$(curl https://api.github.com/repos/marius311/boinc2docker/releases/tags/$TAG)
 
-platforms=(            "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin")
-vboxwrapper_versions=( "00d1381"             "26171"          "26171"              )
+ensure_file example/vm_isocontext_${TAG}.iso $(grep -oE "http.*vm_isocontext_${TAG}.iso" <<< "$RELEASE")
 
-for i in 0 1 2; do 
-    platform=${platforms[i]}
+for platform in "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin"; do 
+    
     platformdir=${platform}__vbox64_mt
-    vboxwrapper_version=${vboxwrapper_versions[i]}
 
     mkdir -p ${platformdir}
     cp example/version.xml example/vm_isocontext_${TAG}.iso ${platformdir}
     cp example/vm_cache.vdi ${platformdir}/vm_cache_${TAG}.vdi
-    vboxwrapper=vboxwrapper_${vboxwrapper_version}_${platform} 
-    if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi
-    ensure_file example/$vboxwrapper ${TAGURL}/$vboxwrapper
+
+    url=$(grep -oE "http.*vboxwrapper.*${platform}[^\"]*" <<< "$RELEASE")
+    vboxwrapper=${url##*/}
+
+    ensure_file example/$vboxwrapper $url
     cp example/$vboxwrapper $platformdir
+
     sed -i "s/%vboxwrapper%/$vboxwrapper/g" ${platformdir}/version.xml 
     sed -i "s/%tag%/$TAG/g" ${platformdir}/version.xml
 done
