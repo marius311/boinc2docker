@@ -2,10 +2,6 @@
 
 set -e
 
-TAG=$(git describe --tags --abbrev=0)
-
-TAGURL=https://github.com/marius311/boinc2docker/releases/download/${TAG}
-
 cd apps/boinc2docker/1.0
 
 ensure_file() {
@@ -13,23 +9,27 @@ ensure_file() {
     grep '{"error":"Not Found"}' $1 && { echo "Download failed: $1"; rm $1; exit 1; } || :
 }
 
-ensure_file example/vm_isocontext_${TAG}.iso ${TAGURL}/vm_isocontext_${TAG}.iso
+#get latest versions of ISO and vboxwrapper
+TAGROOT=https://github.com/marius311/boinc2docker/releases/download
+ISOTAG=$(git describe --tags --abbrev=0 --match "iso/*" | cut -d "/" -f 2)
+VBOXTAG=$(git describe --tags --abbrev=0 --match "vboxwrapper/*" | cut -d "/" -f 2)
 
+#ensure ISO
+ensure_file example/vm_isocontext_${ISOTAG}.iso ${TAGROOT}/${ISOTAG}/vm_isocontext_${ISOTAG}.iso
+
+#ensure vboxwrapper executable and copy files into app version folders
 platforms=(            "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin")
-vboxwrapper_versions=( "00d1381"             "26171"          "26171"              )
-
+vboxwrapper_versions=( "26175"               "26175"          "26175"              )
 for i in 0 1 2; do 
     platform=${platforms[i]}
     platformdir=${platform}__vbox64_mt
     vboxwrapper_version=${vboxwrapper_versions[i]}
-
     mkdir -p ${platformdir}
-    cp example/version.xml example/vm_isocontext_${TAG}.iso ${platformdir}
-    cp example/vm_cache.vdi ${platformdir}/vm_cache_${TAG}.vdi
+    cp example/version.xml example/vm_isocontext_${ISOTAG}.iso ${platformdir}
     vboxwrapper=vboxwrapper_${vboxwrapper_version}_${platform} 
     if [[ $platform == "windows"* ]]; then vboxwrapper=${vboxwrapper}.exe; fi
-    ensure_file example/$vboxwrapper ${TAGURL}/$vboxwrapper
+    ensure_file example/$vboxwrapper ${TAGROOT}/${VBOXTAG}/$vboxwrapper
     cp example/$vboxwrapper $platformdir
     sed -i "s/%vboxwrapper%/$vboxwrapper/g" ${platformdir}/version.xml 
-    sed -i "s/%tag%/$TAG/g" ${platformdir}/version.xml
+    sed -i "s/%iso%/vm_isocontext_${ISOTAG}.iso/g" ${platformdir}/version.xml
 done

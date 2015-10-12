@@ -12,16 +12,9 @@
    </file>
 
    <file>
-      <physical_name>vm_isocontext_%tag%.iso</physical_name>
+      <physical_name>%iso%</physical_name>
       <logical_name>vm_isocontext.iso</logical_name>      
       <copy_file/>
-   </file>
-
-   <file>
-      <physical_name>vm_cache_%tag%.vdi</physical_name>
-      <logical_name>vm_cache.vdi</logical_name>      
-      <copy_file/>
-      <gzip/>
    </file>
 
    <dont_throttle/> 
