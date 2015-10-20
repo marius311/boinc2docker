@@ -3,6 +3,7 @@
         <name>vbox64_mt</name>
         <virtualbox/>
         <is64bit/>
+        <vm_accel_required/>
         <min_vbox_version>30200</min_vbox_version>
         <min_ncpus>1</min_ncpus>
         <max_threads>1024</max_threads>
