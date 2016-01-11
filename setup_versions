@@ -9,10 +9,11 @@ ensure_file() {
     grep '{"error":"Not Found"}' $1 && { echo "Download failed: $1"; rm $1; exit 1; } || :
 }
 
-#get latest versions of ISO and vboxwrapper
+#get latest versions of ISO and vboxwrapper from git tag
+#(or pre-defined ISOTAG and VBOXTAG variables)
 TAGROOT=https://github.com/marius311/boinc2docker/releases/download
-ISOTAG=$(git describe --tags --abbrev=0 --match "iso/*" | cut -d "/" -f 2)
-VBOXTAG=$(git describe --tags --abbrev=0 --match "vboxwrapper/*" | cut -d "/" -f 2)
+ISOTAG=${ISOTAG:-$(git describe --tags --abbrev=0 --match "iso/*" | cut -d "/" -f 2)}
+VBOXTAG=${VBOXTAG:-$(git describe --tags --abbrev=0 --match "vboxwrapper/*" | cut -d "/" -f 2)}
 
 #ensure ISO
 ensure_file example/vm_isocontext_${ISOTAG}.iso ${TAGROOT}/iso%2F${ISOTAG}/vm_isocontext_${ISOTAG}.iso
