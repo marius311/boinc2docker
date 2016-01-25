@@ -26,9 +26,9 @@ Requirements:
 
 boinc2docker is a regular BOINC application. To install,
 
-* Run `./setup_versions <vboxwrapper-version>` where `<vboxwrapper-version>` is a recent vboxwrapper version, e.g. 26169 (see http://boinc.berkeley.edu/dl/ for the latest versions). This script downloads the vboxwrapper executables and boinc2docker ISO, and sets up the folder structure in `apps/boinc2docker/1.0`. 
-* Run `./install_as <projdir> <appname> <version>`. This script copies the files set up by the previous step to your project directory `<projdir>` as an app with name `<appname>` and version `<version>`. If you want multiple apps which use boinc2docker, simply run this command multiple times.
-* Add the contents of `plan_class_spec.xml` to this file in your project directory (or create it if it doesn't exist).
+* Run `ISOTAG=v0.42 VBOXTAG=v0.5 ./setup_versions`, which downloads the vboxwrapper executables and boinc2docker ISO, and sets up the folder structure in `apps/boinc2docker/1.0`. 
+* Run `./install_as <projdir> <appname> <version> <vboxjob.xml>`. This script copies the files set up by the previous step to your project directory `<projdir>` as an app with name `<appname>` and version `<version>`, using the `vboxjob.xml` file specified (you can use the [default](/apps/boinc2docker/1.0/example/vbox_job.xml) or add your own modifications).  If you want multiple apps which use boinc2docker, simply run this command multiple times.
+* Add the contents of [/plan_class_spec.xml](/plan_class_spec.xml) to the file in your project directory (or create it if it doesn't exist).
 * Add the apropriate app tag to your `project.xml` file, e.g. `<app> <name>boinc2docker</name> </app>` where `boinc2docker` is replaced with the name you gave your app. 
 * Run `bin/update_versions`
 * Stage input files and create work as usual. 
