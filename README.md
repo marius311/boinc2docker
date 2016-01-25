@@ -18,13 +18,7 @@ This project is currently in development. Use in production at your own risk.
 Instructions
 ------------
 
-If you manage a BOINC project and would like to use boinc2docker, follow these instructions. 
-
-Requirements:
-
-* A recent version of [Docker](https://www.docker.com/).
-
-boinc2docker is a regular BOINC application. To install,
+If you would like to add this app to your BOINC project,
 
 * Run `ISOTAG=v0.42 VBOXTAG=v0.5 ./setup_versions`, which downloads the vboxwrapper executables and boinc2docker ISO, and sets up the folder structure in `apps/boinc2docker/1.0`. 
 * Run `./install_as <projdir> <appname> <version> <vboxjob.xml>`. This script copies the files set up by the previous step to your project directory `<projdir>` as an app with name `<appname>` and version `<version>`, using the `vboxjob.xml` file specified (you can use the [default](/apps/boinc2docker/1.0/example/vbox_job.xml) or add your own modifications).  If you want multiple apps which use boinc2docker, simply run this command multiple times.
