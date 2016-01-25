@@ -20,6 +20,7 @@ Instructions
 
 If you would like to add this app to your BOINC project,
 
+* `git clone` this repository onto your server
 * Run `ISOTAG=v0.42 VBOXTAG=v0.5 ./setup_versions`, which downloads the vboxwrapper executables and boinc2docker ISO, and sets up the folder structure in `apps/boinc2docker/1.0`. 
 * Run `./install_as <projdir> <appname> <version> <vboxjob.xml>`. This script copies the files set up by the previous step to your project directory `<projdir>` as an app with name `<appname>` and version `<version>`, using the `vboxjob.xml` file specified (you can use the [default](/apps/boinc2docker/1.0/example/vbox_job.xml) or add your own modifications).  If you want multiple apps which use boinc2docker, simply run this command multiple times.
 * Add the contents of [/plan_class_spec.xml](/plan_class_spec.xml) to the file in your project directory (or create it if it doesn't exist).
