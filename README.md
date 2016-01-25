@@ -32,7 +32,7 @@ If you would like to add this app to your BOINC project,
 Limitations 
 -----------
 * This will only run on 64 bit hosts (or 32 bit hosts with VT-x extensions). 
-* There is a one-time download overhead for hosts to get the boinc2docker app (~25Mb). Docker base images then range from ~2Mb for Busybox to ~200Mb for Ubuntu and will also be a one-time download. 
+* There is a one-time download overhead for hosts to get the boinc2docker app (~25Mb). Docker base images then range from ~2Mb for Busybox to ~65Mb for Ubuntu and will also be a one-time download. 
 * If your application is not multithreaded and N tasks start simultaneously, its possible the same images will be downloaded N times. 
 
 
