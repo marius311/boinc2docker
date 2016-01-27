@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# if [ ! -n "$1" ] || [ "$#" -ne 1 ]; then
-#     echo "Usage: ./install_as <projdir> <appname> <versionnum> <vbox_job.xml>" <
-#     exit
-# fi
-
 set -e
 
 PROJDIR=$1
@@ -25,5 +20,8 @@ for PLATFORM in "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin"; do
 done
 
 for type in "in" "out"; do 
-    cp -f templates/boinc2docker_$type $PROJDIR/templates/${APPNAME}_$type
+    cp -n templates/boinc2docker_$type $PROJDIR/templates/${APPNAME}_$type
 done
+
+cp -f py/Boinc/* $PROJDIR/py/Boinc
+cp -f bin/* $PROJDIR/bin
