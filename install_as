@@ -24,4 +24,6 @@ for type in "in" "out"; do
 done
 
 cp -f py/Boinc/* $PROJDIR/py/Boinc
-cp -f bin/* $PROJDIR/bin
+cp -f bin/boinc2docker_create_work.py $PROJDIR/bin/
+sed -e "s/{appname}/${APPNAME}/g" bin/boinc2docker_assimilator > $PROJDIR/bin/${APPNAME}_assimilator
+chmod +x $PROJDIR/bin/${APPNAME}_assimilator
