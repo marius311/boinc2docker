@@ -6,11 +6,26 @@ import os, os.path as osp
 from hashlib import md5
 from time import time
 import argparse
+import re
+
+
 
 log = SchedMessages()
 class CheckOutputError(Exception): pass
 
 projdir = osp.realpath(osp.join(osp.dirname(__file__),'..','..'))
+
+def _get_create_work_args():
+    try: _check_output([osp.join(projdir,'bin','create_work')],stderr=STDOUT)
+    except CalledProcessError as e: doc = e.output
+    matches = [g.groups() for g in [re.search('--(.*?) (.*?) ',l) for l in doc.splitlines()] if g]
+    args = {k:{'n':int,'x':float}.get(v,str) for k,v in matches}
+    args['additional_xml']=str
+    return args
+
+create_work_args = _get_create_work_args()
+
+
 
 def check_output(cmd,*args,**kwargs):
     """
@@ -40,36 +55,27 @@ def create_work(appname,create_work_args,input_files):
     Creates and stages input files based on a list of (name,contents) in input_files,
     and calls bin/create_work with extra args specified by create_work_args
     """
-    
     return check_output((['bin/create_work','--appname',appname]+
                            list(chain(*(['--%s'%k,'%s'%v] for k,v in create_work_args.items())))+
                            [stage_file(*i) for i in input_files]),
                           cwd=projdir)
 
 
-create_work_args = {
-    'target_nresults': int,
-    'max_error_results': int,
-    'max_success_results': int,
-    'max_total_results': int,
-    'min_quorum': int,
-    'priority': float,
-    'rsc_disk_bound': float,
-    'wu_name':str,
-    'wu_template':str
-}
-
 def add_create_work_args(parser):
     """
     Add BOINC's bin/create_work arguments to a Python argparse parser
     """
-
-    for k,v in create_work_args.items():
+    for k,v in sorted(create_work_args.items()):
         parser.add_argument('--%s'%k,type=v,metavar={int:'n',float:'x',str:'string'}[v])
+    parser.add_argument('--credit',type=float, metavar='x')
+
 
 def read_create_work_args(args):
     """
-    Read create_work_args from the 
+    Read create_work_args from Python argparse args
     """
     if isinstance(args,argparse.Namespace): args=vars(args)
-    return {k:v for k,v in args.items() if k in create_work_args and v is not None}
+    cwargs = {k:v for k,v in args.items() if k in create_work_args and v is not None}
+    if args.get('credit'): 
+        cwargs['additional_xml'] = (args['additional_xml'] or '')+'<credit>%s</credit>'%args['credit']
+    return cwargs
