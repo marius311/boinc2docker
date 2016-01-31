@@ -7,7 +7,7 @@ from Boinc.create_work import add_create_work_args, read_create_work_args, creat
 script = """#!/bin/sh
 set -e 
 
-docker inspect {image} || {{ docker pull {image} && save_docker.sh; }}
+docker inspect {image} > /dev/null || {{ docker pull {image} && save_docker.sh; }}
 docker run --rm -v /root/shared:/root/shared {entrypoint} {image} {command}
 """
 
@@ -50,4 +50,3 @@ if __name__=='__main__':
                                    entrypoint=args.entrypoint,
                                    create_work_args=read_create_work_args(args)
                                   )
-    #call boinc2docker_create_work
