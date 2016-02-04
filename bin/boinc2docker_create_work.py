@@ -7,10 +7,19 @@ from Boinc.create_work import add_create_work_args, read_create_work_args, creat
 script = """#!/bin/sh
 set -e 
 
-docker inspect {image} > /dev/null || {{ docker pull {image} && save_docker.sh; }}
-docker run --rm -v /root/shared:/root/shared {entrypoint} {image} {command}
-"""
+REPO={repo}
+TAG={tag}
+IMG=$REPO:$TAG
 
+docker inspect $IMG > /dev/null && echo Found $IMG 
+if [ $? -ne 0 ]; then 
+    echo Pulling $IMG 
+    docker pull $IMG 
+    docker images $REPO | tail -n +2 | awk '{{print $1":"$2}}' | grep -vx $IMG | xargs --no-run-if-empty docker rmi 
+    save_docker.sh
+fi
+echo Running... && docker run --rm -v /root/shared:/root/shared {entrypoint} $IMG {command}
+"""
 
 
 def boinc2docker_create_work(image,command,
@@ -19,7 +28,9 @@ def boinc2docker_create_work(image,command,
                              env=None,
                              create_work_args=None):
 
-    fscript = script.format(image=image,
+    if ':' not in image: image+=':latest'
+    repo,tag = image.split(':')
+    fscript = script.format(repo=repo,tag=tag,
                             command=' '.join('"'+str(x)+'"' for x in command),
                             entrypoint=('--entrypoint '+entrypoint) if entrypoint else '')
 
