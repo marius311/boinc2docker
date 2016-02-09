@@ -20,7 +20,7 @@ ensure_file example/vm_isocontext_${ISOTAG}.iso ${TAGROOT}/iso%2F${ISOTAG}/vm_is
 
 #ensure vboxwrapper executable and copy files into app version folders
 platforms=(            "x86_64-pc-linux-gnu" "windows_x86_64" "x86_64-apple-darwin")
-vboxwrapper_versions=( "26180"               "26180"          "26180"              )
+vboxwrapper_versions=( "26182"               "26182"          "26182"              )
 for i in 0 1 2; do 
     platform=${platforms[i]}
     platformdir=${platform}__vbox64_mt
