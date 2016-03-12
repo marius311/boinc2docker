@@ -1,0 +1,123 @@
+#!/usr/bin/env python
+
+import argparse
+from os import fchmod, environ, makedirs as _makedirs
+from os.path import join, exists, basename, dirname
+import yaml
+from zipfile import ZipFile
+from functools import partial
+from subprocess import check_output
+from shutil import copy
+from distutils.dir_util import copy_tree
+
+
+#some convenience stuff
+
+sh = lambda cmd: check_output(['sh','-c',cmd])
+fmt = partial(lambda s,l: s.format(**l),l=locals())
+def download(f):
+    sh('wget --content-disposition -P %s %s'%(args.tmpdir,f))
+    return join(args.tmpdir,basename(f))
+def makedirs(d):
+    if not exists(d): _makedirs(d)
+class attrdict(dict):
+    def __init__(self,*args,**kwargs):
+        super(attrdict, self).__init__(*args, **kwargs)
+        self.__dict__ = self
+
+
+
+#functions for downloading ISO and vboxwrapper
+
+def get_vboxwrapper(platform):
+    """
+    Download and unzip vboxwrapper executables from http://boinc.berkeley.edu/dl
+    """
+    vboxwrapper_root = fmt("vboxwrapper_{args.vboxwrapper}_"+platform)
+    vboxwrapper_file = join(args.tmpdir,vboxwrapper_root+('.exe' if 'windows' in platform else ''))
+    if not exists(vboxwrapper_file): 
+        with ZipFile(download('http://boinc.berkeley.edu/dl/'+vboxwrapper_root+'.zip')) as zf:
+            with open(vboxwrapper_file,'wb') as f:
+                zi={basename(z.filename):z for z in zf.filelist}[basename(vboxwrapper_file)]
+                f.write(zf.read(zi))
+                fchmod(f.fileno(), 0o775)
+
+    return vboxwrapper_file
+
+
+def get_iso():
+    """
+    Download ISO from Github
+    """
+    iso_file = join(args.tmpdir,fmt("vm_isocontext_v{args.iso}.iso"))
+    if not exists(iso_file): 
+        download(fmt("https://github.com/marius311/boinc2docker/releases/download/iso%2Fv{args.iso}/vm_isocontext_v{args.iso}.iso"))
+        
+    return iso_file
+
+
+# load and parse options
+
+defaults = yaml.load(open('boinc2docker.yml'))
+defaults.update({
+    'tmpdir':join(dirname(__file__),'build'),
+    'projhome':environ.get('PROJHOME')
+})
+
+args = [
+    ['iso',         'boinc2docker ISO version to use'],
+    ['vboxwrapper', 'vboxwrapper version to use'],
+    ['memory',      'memory (in GB) needed for app'],
+    ['projhome',    'project home'],
+    ['appname',     'name to give the app'],
+    ['appver',      'version to give the app'],
+    ['tmpdir',      "where to store downloaded ISO and vboxwrapper exe's"]
+]
+
+parser = argparse.ArgumentParser(prog='boinc2docker_create_app')
+for a,h in args: 
+    if a in defaults:
+        parser.add_argument('--'+a,default=defaults[a], help=h+' (default: %s)'%defaults[a])
+    else:
+        parser.add_argument('--'+a, help=h)
+parser.add_argument('boinc2docker.yml', nargs='?', help="boinc2docker.yml file containing confirugation options")
+args = attrdict(defaults,**vars(parser.parse_args()))
+if not args.projhome: raise ValueError("Please specify either --projhome option or $PROJHOME variable")
+approot=join(args.projhome,'apps',args.appname,args.appver)
+
+
+
+# create app versions
+
+for platform in ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin",
+                 "i686-pc-linux-gnu",  "windows_intelx86","i686-apple-darwin"]:
+    appfolder = join(approot,platform+'__vbox64_mt')
+    makedirs(appfolder)
+    vboxjob_file = fmt("{args.appname}_{args.appver}_vbox_job.xml")
+    vboxwrapper_file = get_vboxwrapper(platform)
+    iso_file = get_iso()
+
+    #version.xml
+    open(join(appfolder,'version.xml'),'w').write(
+        open('version.xml').read().format(vboxwrapper=basename(vboxwrapper_file),iso=iso_file,vboxjob=vboxjob_file)
+    )
+
+    #vbox_job.xml
+    open(join(appfolder,vboxjob_file),'w').write(
+        open('vbox_job.xml').read().format(
+           memory=args.memory,
+           extra='\n'.join([' '*4+('<{0}>{1}</{0}>'.format(*i.items()[0]) if isinstance(i,dict) else '<%s/>'%i)
+                            for i in args.get('vbox_job.xml',[])])
+        )
+    )
+
+    #vboxwrapper and ISO
+    copy(vboxwrapper_file,appfolder)
+    copy(iso_file,appfolder)
+
+
+# project files
+copy_tree('py',join(args.projhome,'py'))
+makedirs(join(args.projhome,'bin'))
+copy('bin/boinc2docker_create_work.py',join(args.projhome,'bin'))
+copy('bin/boinc2docker_assimilator',join(args.projhome,'bin',fmt('{args.appname}_assimilator')))

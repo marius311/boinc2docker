@@ -1,18 +1,18 @@
 <version>
 
    <file>
-      <physical_name>%vboxwrapper%</physical_name>
+      <physical_name>{vboxwrapper}</physical_name>
       <main_program/>
    </file>
 
    <file>
-      <physical_name>%vbox_job%</physical_name>
+      <physical_name>{vboxjob}</physical_name>
       <logical_name>vbox_job.xml</logical_name>      
       <copy_file/>
    </file>
 
    <file>
-      <physical_name>%iso%</physical_name>
+      <physical_name>{iso}</physical_name>
       <logical_name>vm_isocontext.iso</logical_name>      
       <copy_file/>
    </file>
