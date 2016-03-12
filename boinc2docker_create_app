@@ -80,6 +80,7 @@ for a,h in args:
         parser.add_argument('--'+a,default=defaults[a], help=h+' (default: %s)'%defaults[a])
     else:
         parser.add_argument('--'+a, help=h)
+parser.add_argument('--no32bit', action='store_true', help="don't install 32bit app versions")
 parser.add_argument('boinc2docker.yml', nargs='?', help="boinc2docker.yml file containing confirugation options")
 args = attrdict(defaults,**vars(parser.parse_args()))
 if not args.projhome: raise ValueError("Please specify either --projhome option or $PROJHOME variable")
@@ -89,8 +90,11 @@ approot=join(args.projhome,'apps',args.appname,args.appver)
 
 # create app versions
 
-for platform in ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin",
-                 "i686-pc-linux-gnu",  "windows_intelx86","i686-apple-darwin"]:
+platforms = ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin"]
+if not args.no32bit: 
+    platforms += ["i686-pc-linux-gnu",  "windows_intelx86","i686-apple-darwin"]
+
+for platform in platforms:
     appfolder = join(approot,platform+'__vbox64_mt')
     makedirs(appfolder)
     vboxjob_file = fmt("{args.appname}_{args.appver}_vbox_job.xml")
