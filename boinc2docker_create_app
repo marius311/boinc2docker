@@ -99,7 +99,7 @@ for platform in ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin",
 
     #version.xml
     open(join(appfolder,'version.xml'),'w').write(
-        open('version.xml').read().format(vboxwrapper=basename(vboxwrapper_file),iso=iso_file,vboxjob=vboxjob_file)
+        open('version.xml').read().format(vboxwrapper=basename(vboxwrapper_file),iso=basename(iso_file),vboxjob=vboxjob_file)
     )
 
     #vbox_job.xml
