@@ -18,15 +18,32 @@ This project is currently in development. Use in production at your own risk.
 Instructions
 ------------
 
-If you would like to add this app to your BOINC project,
+#### Install
+
+To add this app to your BOINC project,
 
 * `git clone` this repository onto your server
-* Run `./setup_versions`, which downloads the vboxwrapper executables and boinc2docker ISO, and sets up the folder structure in `apps/boinc2docker/1.0`. 
-* Run `./install_as <projdir> <appname> <version> <vboxjob.xml>`. This script copies the files set up by the previous step to your project directory `<projdir>` as an app with name `<appname>` and version `<version>`, using the `vboxjob.xml` file specified (you can use the [default](/apps/boinc2docker/1.0/example/vbox_job.xml) or add your own modifications).  If you want multiple apps which use boinc2docker, simply run this command multiple times.
-* Add the contents of [/plan_class_spec.xml](/plan_class_spec.xml) to the file in your project directory (or create it if it doesn't exist).
-* Add the apropriate app tag to your `project.xml` file, e.g. `<app> <name>boinc2docker</name> </app>` where `boinc2docker` is replaced with the name you gave your app. 
+* Run `boinc2docker_create_app --projhome <projhomedir>` to copy the app files to your project. This command has a number of options to control things like the name, version, etc... of the created app. See `boinc2docker_create_app -h` for documentation.
 * Run `bin/update_versions`
-* Stage input files and create work as usual. 
+
+#### Submit Jobs
+
+To submit a Docker job to your server, use the `bin/boinc2docker_create_work.py` command (run with `-h` for documentation). It has all of the same options as BOINC's `bin/create_work` command, and is additionally meant to resemble a `docker run` command. So for example, to create a job which would execute following `docker run` command,
+```
+docker run python:3-slim python -c "print('Hello BOINC')"
+```
+you would do,
+```
+bin/boinc2docker_create_work.py python:3-slim python -c "print('Hello BOINC')"
+```
+This creates the job on the server. When a client gets this job, their computer will then run the given Docker command, automatically downloading any images (in this case `python:3-slim`) as necessary.
+
+#### Input and Output Files
+
+All files written to `/root/shared/results/` from inside of the Docker container are automatically returned to the server as an output file from the job `results.tgz`. 
+
+(TODO: custom input files don't work yet) 
+<!-- To use input files for your job, edit the [`boinc2docker_in`](/templates/boinc2docker_in) file to add any extra input files you may need and copy it to the `templates` folder on your server. Input files with logical name `shared/X` will appear as `/root/shared/X` inside the Docker container. -->
 
 
 Limitations 
