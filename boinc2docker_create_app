@@ -125,6 +125,7 @@ for platform in platforms:
 
 # project files
 copy_tree('py',join(args.projhome,'py'))
+copy_tree('templates',join(args.projhome,'templates'))
 makedirs(join(args.projhome,'bin'))
 copy('bin/boinc2docker_create_work.py',join(args.projhome,'bin'))
 copy('bin/boinc2docker_assimilator',join(args.projhome,'bin',fmt('{args.appname}_assimilator')))
