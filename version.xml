@@ -18,5 +18,6 @@
    </file>
 
    <dont_throttle/> 
-
+   <needs_network/>
+   
 </version>

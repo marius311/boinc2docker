@@ -9,15 +9,17 @@ from functools import partial
 from subprocess import check_output
 from shutil import copy
 from distutils.dir_util import copy_tree
-
+import xml.etree.ElementTree as et
+from xml.dom import minidom
 
 #some convenience stuff
 
 sh = lambda cmd: check_output(['sh','-c',cmd])
 fmt = partial(lambda s,l: s.format(**l),l=locals())
 def download(f):
-    sh('wget --content-disposition -P %s %s'%(args.tmpdir,f))
-    return join(args.tmpdir,basename(f))
+    tgt=join(args.tmpdir,basename(f))
+    sh('wget --progress=bar:force --content-disposition %s -O %s'%(f,tgt))
+    return tgt
 def makedirs(d):
     if not exists(d): _makedirs(d)
 class attrdict(dict):
@@ -80,7 +82,7 @@ for a,h in args:
         parser.add_argument('--'+a,default=defaults[a], help=h+' (default: %s)'%defaults[a])
     else:
         parser.add_argument('--'+a, help=h)
-parser.add_argument('--no32bit', action='store_true', help="don't install 32bit app versions")
+# parser.add_argument('--no32bit', action='store_true', help="don't install 32bit app versions")
 parser.add_argument('boinc2docker.yml', nargs='?', help="boinc2docker.yml file containing confirugation options")
 args = attrdict(defaults,**vars(parser.parse_args()))
 if not args.projhome: raise ValueError("Please specify either --projhome option or $PROJHOME variable")
@@ -90,12 +92,13 @@ approot=join(args.projhome,'apps',args.appname,args.appver)
 
 # create app versions
 
+makedirs(args.tmpdir)
 platforms = ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin"]
-if not args.no32bit: 
-    platforms += ["i686-pc-linux-gnu",  "windows_intelx86","i686-apple-darwin"]
+# if not args.no32bit: 
+#     platforms += ["i686-pc-linux-gnu",  "windows_intelx86","i686-apple-darwin"]
 
 for platform in platforms:
-    appfolder = join(approot,platform+'__vbox64_mt')
+    appfolder = join(approot,platform+'__docker_vbox64_mt')
     makedirs(appfolder)
     vboxjob_file = fmt("{args.appname}_{args.appver}_vbox_job.xml")
     vboxwrapper_file = get_vboxwrapper(platform)
@@ -125,3 +128,41 @@ copy_tree('py',join(args.projhome,'py'))
 makedirs(join(args.projhome,'bin'))
 copy('bin/boinc2docker_create_work.py',join(args.projhome,'bin'))
 copy('bin/boinc2docker_assimilator',join(args.projhome,'bin',fmt('{args.appname}_assimilator')))
+
+
+
+# merge stuff into plan_class_spec.xml and project.xml
+
+def xmlmerge(src,dst,idkey='name'):
+    """
+    Merge the XML elements from the string `src` into the file at filename
+    `dst`. Merges only at the first level and compares elements via their
+    child tag `idkey`.
+    """
+    dtree=et.parse(dst)
+    droot=dtree.getroot()
+    for sc in et.fromstring(src).findall('./'):
+        for dc in droot.findall(sc.tag):
+            if dc.find(idkey).text==sc.find(idkey).text: break
+        else:
+            droot.append(sc)
+
+    #from boincxml.py
+    def strip_white_space(node):
+        for child in node.childNodes[:]:
+            if child.nodeType == child.TEXT_NODE:
+                child.data = child.data.strip()
+                if not child.data: node.removeChild(child)
+            else:
+                strip_white_space(child)
+        return node
+
+    open(dst,'w').write(strip_white_space(minidom.parseString(et.tostring(droot))).toprettyxml(indent=" "*4))
+
+for f in ['plan_class_spec.xml','project.xml']:
+    src=fmt(open(f).read())
+    if exists(join(args.projhome,f)):
+        xmlmerge(src,join(args.projhome,f))
+    else:
+        open(join(args.projhome,f),'w').write(src)
+

@@ -1,6 +1,6 @@
 <plan_classes>
     <plan_class>
-        <name>vbox64_mt</name>
+        <name>docker_vbox64_mt</name>
         <virtualbox/>
         <is64bit/>
         <vm_accel_required/>
