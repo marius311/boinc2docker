@@ -68,20 +68,23 @@ defaults.update({
 })
 
 args = [
-    ['iso',         'boinc2docker ISO version to use'],
-    ['vboxwrapper', 'vboxwrapper version to use'],
-    ['memory',      'memory (in GB) needed for app'],
-    ['projhome',    'project home'],
-    ['appname',     'name to give the app'],
-    ['appver',      'version to give the app'],
-    ['resultsdir',  'where app stores results (default: /results/APPNAME)'],
-    ['tmpdir',      "where to store downloaded ISO and vboxwrapper exe's"],
+    ['iso',             'boinc2docker ISO version to use'],
+    ['vboxwrapper',     'vboxwrapper version to use'],
+    ['memory',          'memory (in GB) needed for app'],
+    ['projhome',        'project home'],
+    ['appname',         'name to give the app'],
+    ['appver',          'version to give the app'],
+    ['resultsdir',      'where to assimilate results to (default: /results/APPNAME)'],
+    ['tmpdir',          "where to store downloaded ISO and vboxwrapper exe's"],
+    ['dont_install',    'one or more of ["template_in","template_out","assimilator"'],
 ]
 
 parser = argparse.ArgumentParser(prog='boinc2docker_create_app')
 for a,h in args: 
-    if a in defaults:
-        parser.add_argument('--'+a,default=defaults[a], help=h+' (default: %s)'%defaults[a])
+    if a == 'dont_install':
+        parser.add_argument('--'+a, default=[], nargs='+', help=h)
+    elif a in defaults:
+        parser.add_argument('--'+a, default=defaults[a], help=h+' (default: %s)'%defaults[a])
     else:
         parser.add_argument('--'+a, help=h)
 # parser.add_argument('--no32bit', action='store_true', help="don't install 32bit app versions")
@@ -92,6 +95,9 @@ if args['boinc2docker.yml'] is not None:
 if args.resultsdir is None:
     args.resultsdir = join('/results',args.appname)
 if not args.projhome: raise ValueError("Please specify either --projhome option or $PROJHOME variable")
+for x in args.dont_install:
+    if x not in ['template_in','template_out','assimilator']:
+        raise ValueError("Unrecognized argument '%s' given to --dont_install"%x)
 approot=join(args.projhome,'apps',args.appname,args.appver)
 
 
@@ -133,15 +139,16 @@ for platform in platforms:
 for d in ['bin','templates']: makedirs(join(args.projhome,d))
 copy_tree(join(rootdir,'py'),join(args.projhome,'py'))
 for t in ['in','out']: 
-    copy(join(rootdir,fmt('templates/boinc2docker_{t}')),
-         join(args.projhome,'templates',fmt('{args.appname}_{t}')),
-         clobber=False)
+    if fmt('template_{t}') not in args.dont_install:
+        copy(join(rootdir,fmt('templates/boinc2docker_{t}')),
+             join(args.projhome,'templates',fmt('{args.appname}_{t}')))
 copy(join(rootdir,'bin','boinc2docker_create_work.py'),join(args.projhome,'bin'))
-assimilator_file=join(args.projhome,'bin',fmt('{args.appname}_assimilator'))
-if not exists(assimilator_file):
-    open(assimilator_file,'w').write(
-        open(join(rootdir,'bin','boinc2docker_assimilator')).read().replace('{results}',args.resultsdir)
-    )
+if "assimilator" not in args.dont_install:
+    assimilator_file=join(args.projhome,'bin',fmt('{args.appname}_assimilator'))
+    if not exists(assimilator_file):
+        open(assimilator_file,'w').write(
+            open(join(rootdir,'bin','boinc2docker_assimilator')).read().replace('{results}',args.resultsdir)
+        )
 
 
 
