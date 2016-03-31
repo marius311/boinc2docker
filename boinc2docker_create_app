@@ -2,7 +2,7 @@
 
 import argparse
 from os import fchmod, environ, makedirs as _makedirs
-from os.path import join, exists, basename, dirname
+from os.path import join, exists, basename, dirname, abspath
 import yaml
 from zipfile import ZipFile
 from functools import partial
@@ -13,7 +13,7 @@ import xml.etree.ElementTree as et
 from xml.dom import minidom
 
 #some convenience stuff
-
+rootdir=dirname(abspath(__file__))
 sh = lambda cmd: check_output(['sh','-c',cmd])
 fmt = partial(lambda s,l: s.format(**l),l=locals())
 def download(f):
@@ -61,9 +61,9 @@ def get_iso():
 
 # load and parse options
 
-defaults = yaml.load(open('boinc2docker.yml'))
+defaults = yaml.load(open(join(rootdir,'boinc2docker.yml')))
 defaults.update({
-    'tmpdir':join(dirname(__file__),'build'),
+    'tmpdir':join(rootdir,'build'),
     'projhome':environ.get('PROJHOME')
 })
 
@@ -74,7 +74,8 @@ args = [
     ['projhome',    'project home'],
     ['appname',     'name to give the app'],
     ['appver',      'version to give the app'],
-    ['tmpdir',      "where to store downloaded ISO and vboxwrapper exe's"]
+    ['resultsdir',  'where app stores results (default: /results/APPNAME)'],
+    ['tmpdir',      "where to store downloaded ISO and vboxwrapper exe's"],
 ]
 
 parser = argparse.ArgumentParser(prog='boinc2docker_create_app')
@@ -88,6 +89,8 @@ parser.add_argument('boinc2docker.yml', nargs='?', help="boinc2docker.yml file c
 args = attrdict(defaults,**vars(parser.parse_args()))
 if args['boinc2docker.yml'] is not None:
     args.update(yaml.load(open(args['boinc2docker.yml'])))
+if args.resultsdir is None:
+    args.resultsdir = join('/results',args.appname)
 if not args.projhome: raise ValueError("Please specify either --projhome option or $PROJHOME variable")
 approot=join(args.projhome,'apps',args.appname,args.appver)
 
@@ -109,12 +112,12 @@ for platform in platforms:
 
     #version.xml
     open(join(appfolder,'version.xml'),'w').write(
-        open('version.xml').read().format(vboxwrapper=basename(vboxwrapper_file),iso=basename(iso_file),vboxjob=vboxjob_file)
+        open(join(rootdir,'version.xml')).read().format(vboxwrapper=basename(vboxwrapper_file),iso=basename(iso_file),vboxjob=vboxjob_file)
     )
 
     #vbox_job.xml
     open(join(appfolder,vboxjob_file),'w').write(
-        open('vbox_job.xml').read().format(
+        open(join(rootdir,'vbox_job.xml')).read().format(
            memory=args.memory,
            extra='\n'.join([' '*4+('<{0}>{1}</{0}>'.format(*i.items()[0]) if isinstance(i,dict) else '<%s/>'%i)
                             for i in args.get('vbox_job.xml',[])])
@@ -127,16 +130,18 @@ for platform in platforms:
 
 
 # project files
-copy_tree('py',join(args.projhome,'py'))
+for d in ['bin','templates']: makedirs(join(args.projhome,d))
+copy_tree(join(rootdir,'py'),join(args.projhome,'py'))
 for t in ['in','out']: 
-    copy(fmt('templates/boinc2docker_{t}'),
+    copy(join(rootdir,fmt('templates/boinc2docker_{t}')),
          join(args.projhome,'templates',fmt('{args.appname}_{t}')),
          clobber=False)
-makedirs(join(args.projhome,'bin'))
-copy('bin/boinc2docker_create_work.py',join(args.projhome,'bin'))
-copy('bin/boinc2docker_assimilator',
-     join(args.projhome,'bin',fmt('{args.appname}_assimilator')),
-     clobber=False)
+copy(join(rootdir,'bin','boinc2docker_create_work.py'),join(args.projhome,'bin'))
+assimilator_file=join(args.projhome,'bin',fmt('{args.appname}_assimilator'))
+if not exists(assimilator_file):
+    open(assimilator_file,'w').write(
+        open(join(rootdir,'bin','boinc2docker_assimilator')).read().replace('{results}',args.resultsdir)
+    )
 
 
 
@@ -169,7 +174,7 @@ def xmlmerge(src,dst,idkey='name'):
     open(dst,'w').write(strip_white_space(minidom.parseString(et.tostring(droot))).toprettyxml(indent=" "*4))
 
 for f in ['plan_class_spec.xml','project.xml']:
-    src=fmt(open(f).read())
+    src=fmt(open(join(rootdir,f)).read())
     if exists(join(args.projhome,f)):
         xmlmerge(src,join(args.projhome,f))
     else:
