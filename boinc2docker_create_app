@@ -110,7 +110,7 @@ platforms = ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin"]
 #     platforms += ["i686-pc-linux-gnu",  "windows_intelx86","i686-apple-darwin"]
 
 for platform in platforms:
-    appfolder = join(approot,platform+'__docker_vbox64_mt')
+    appfolder = join(approot,platform+'__vbox64_mt')
     makedirs(appfolder)
     vboxjob_file = fmt("{args.appname}_{args.appver}_vbox_job.xml")
     vboxwrapper_file = get_vboxwrapper(platform)
