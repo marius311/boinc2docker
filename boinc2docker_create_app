@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
-from os import fchmod, environ, makedirs as _makedirs
+from os import fchmod, environ, chmod, makedirs as _makedirs
 from os.path import join, exists, basename, dirname, abspath
 import yaml
 from zipfile import ZipFile
@@ -145,11 +145,10 @@ for t in ['in','out']:
 copy(join(rootdir,'bin','boinc2docker_create_work.py'),join(args.projhome,'bin'))
 if "assimilator" not in args.dont_install:
     assimilator_file=join(args.projhome,'bin',fmt('{args.appname}_assimilator'))
-    if not exists(assimilator_file):
-        open(assimilator_file,'w').write(
-            open(join(rootdir,'bin','boinc2docker_assimilator')).read().replace('{results}',args.resultsdir)
-        )
-
+    open(assimilator_file,'w').write(
+        open(join(rootdir,'bin','boinc2docker_assimilator')).read().replace('{results}',args.resultsdir)
+    )
+    chmod(assimilator_file,0755)
 
 
 # merge stuff into plan_class_spec.xml and project.xml
