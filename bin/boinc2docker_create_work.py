@@ -70,12 +70,16 @@ def boinc2docker_create_work(image,command,
             layer_filename = fmt("layer_{layer_id}.tar")
             layer_path = sh("bin/dir_hier_path {layer_filename}")
             input_files.append((fmt("shared/image/{layer_filename}"),layer_filename))
-            if need_extract: sh("tar cvf {layer_path} -C {tmpdir} {layer_id}")
+            if need_extract: 
+                sh("tar cvf {layer_path} -C {tmpdir} {layer_id}")
+                sh("gzip -k {layer_path}")
 
 
         #extract remaining image info to individual tar file, directly into download dir
         input_files.append((fmt("shared/image/{image_filename}"),image_filename))
-        if need_extract: sh("tar cvf {image_path} -C {tmpdir} {image_id}.json manifest.json repositories")
+        if need_extract: 
+            sh("tar cvf {image_path} -C {tmpdir} {image_id}.json manifest.json repositories")
+            sh("gzip -k {image_path}")
 
 
         #generate input template
@@ -85,8 +89,8 @@ def boinc2docker_create_work(image,command,
             fileinfo = ET.SubElement(root, "file_info")
             ET.SubElement(fileinfo, "number").text = str(i)
             if i!=0: 
-                ET.SubElement(fileinfo, "sticky")
-                ET.SubElement(fileinfo, "no_delete")
+                for k in ['sticky','no_delete','gzip']:
+                    ET.SubElement(fileinfo, k)
             fileref = ET.SubElement(workunit, "file_ref")
             ET.SubElement(fileref, "file_number").text = str(i)
             ET.SubElement(fileref, "open_name").text = open_name
