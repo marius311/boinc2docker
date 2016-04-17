@@ -40,6 +40,9 @@ def check_output(cmd,*args,**kwargs):
         log.printf(CRITICAL,"Error calling %s:\n%s\n",str(cmd),str(e))
         raise CheckOutputError
 
+def dir_hier_path(filename):
+    return check_output(['bin/dir_hier_path',filename],cwd=projdir).strip()
+
 
 def stage_file(name,contents,perm=None):
     base,ext = osp.splitext(name)
@@ -57,16 +60,18 @@ def create_work(appname,create_work_args,input_files):
     """
     return check_output((['bin/create_work','--appname',appname]+
                            list(chain(*(['--%s'%k,'%s'%v] for k,v in create_work_args.items())))+
-                           [stage_file(*i) for i in input_files]),
+                           [stage_file(*i) if isinstance(i,tuple) else i for i in input_files]),
                           cwd=projdir)
 
 
-def add_create_work_args(parser):
+def add_create_work_args(parser,exclude=None):
     """
     Add BOINC's bin/create_work arguments to a Python argparse parser
+    exclude can be a list of args not to add
     """
     for k,v in sorted(create_work_args.items()):
-        parser.add_argument('--%s'%k,type=v,metavar={int:'n',float:'x',str:'string'}[v])
+        if exclude is None or k not in exclude:
+            parser.add_argument('--%s'%k,type=v,metavar={int:'n',float:'x',str:'string'}[v])
     parser.add_argument('--credit',type=float, metavar='x')
 
 
