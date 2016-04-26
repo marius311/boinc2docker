@@ -3,7 +3,7 @@ from sched_messages import SchedMessages, CRITICAL
 from subprocess import CalledProcessError, check_output as _check_output, STDOUT
 from itertools import chain
 import os, os.path as osp
-from hashlib import md5
+from uuid import uuid4
 from time import time
 import argparse
 import re
@@ -46,7 +46,7 @@ def dir_hier_path(filename):
 
 def stage_file(name,contents,perm=None):
     base,ext = osp.splitext(name)
-    fullname = base + '_' + md5(str(contents)+str(time())).hexdigest() + ext
+    fullname = base + '_' + uuid4().hex + ext
     download_path = check_output(['bin/dir_hier_path',fullname],cwd=projdir).strip()
     with open(download_path,'w') as f: f.write(contents)
     if perm: os.chmod(download_path,perm)
