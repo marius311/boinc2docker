@@ -10,7 +10,7 @@ import xml.etree.cElementTree as ET
 from Boinc.create_work import add_create_work_args, read_create_work_args, create_work, projdir, dir_hier_path
 from functools import partial
 from os.path import join, split, exists, basename
-from subprocess import check_output
+from subprocess import check_output, CalledProcessError, STDOUT
 from xml.dom import minidom
 from inspect import currentframe
 from textwrap import dedent
@@ -50,7 +50,7 @@ def boinc2docker_create_work(image,
     """
 
     fmt = partial(lambda s,f: s.format(**dict(globals(),**f.f_locals)),f=currentframe())
-    sh = lambda cmd: check_output(fmt(cmd),shell=True).strip()
+    sh = lambda cmd: check_output(fmt(cmd),shell=True,stderr=STDOUT).strip()
     tmpdir = mkdtemp()
 
     if prerun is None: prerun=""
@@ -62,7 +62,16 @@ def boinc2docker_create_work(image,
     try:
 
         #get entire image as a tar file
-        image_id = sh('docker inspect --format "{{{{ .Id }}}}" {image}').strip().split(':')[1]
+        def get_image_id(): return sh('docker inspect --format "{{{{ .Id }}}}" {image}').strip().split(':')[1]
+        try:
+            image_id = get_image_id()
+        except CalledProcessError as e:
+            if 'No such image' in e.output:
+                if verbose: print fmt("Pulling '{image}'...")
+                sh('docker pull {image}')
+                image_id = get_image_id()
+            else:
+                raise
         image_filename = fmt("image_{image_id}.tar")
         image_path = dir_hier_path(image_filename)
 
@@ -71,7 +80,7 @@ def boinc2docker_create_work(image,
             need_extract = False
             manifest = json.load(tarfile.open(image_path).extractfile('manifest.json'))
         else:
-            if verbose: print fmt("Exporting image '{image}' to tar file...")
+            if verbose: print fmt("Exporting '{image}' to tar file...")
             need_extract = True
             sh("docker save {image} | tar xf - -C {tmpdir}")
             manifest = json.load(open(join(tmpdir,'manifest.json')))
@@ -155,6 +164,8 @@ def boinc2docker_create_work(image,
 
     except KeyboardInterrupt:
         print("Cleaning up temporary files...")
+    except CalledProcessError as e:
+        print e.output.strip()
     finally:
         # cleanup
         try:
@@ -178,8 +189,9 @@ if __name__=='__main__':
 
     args = parser.parse_args()
 
-    print boinc2docker_create_work(image=args.IMAGE, 
-                                   command=args.COMMAND, 
-                                   appname=args.appname,
-                                   entrypoint=args.entrypoint,
-                                   create_work_args=read_create_work_args(args))
+    wu = boinc2docker_create_work(image=args.IMAGE, 
+                                  command=args.COMMAND, 
+                                  appname=args.appname,
+                                  entrypoint=args.entrypoint,
+                                  create_work_args=read_create_work_args(args))
+    if wu is not None: print wu
