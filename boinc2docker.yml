@@ -1,6 +1,6 @@
 appname: boinc2docker
 appver: "1.00"
-iso: "0.44"
+iso: "1.0.0"
 vboxwrapper: "26182"
 memory: 1024
 vbox_job.xml:
