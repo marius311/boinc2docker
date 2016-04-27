@@ -18,6 +18,13 @@ from uuid import uuid4 as uuid
 from tempfile import mkdtemp
 
 
+def escape_string(s):
+    """
+    Returns string with appropriate characters escaped so that it can be
+    passed as a shell argument.
+    """
+    return check_output(["bash","-c",'printf "%q" "$@"','_', s])
+
 def boinc2docker_create_work(image,
                              command=None,
                              input_files=None,
@@ -43,7 +50,7 @@ def boinc2docker_create_work(image,
     """
 
     fmt = partial(lambda s,f: s.format(**dict(globals(),**f.f_locals)),f=currentframe())
-    sh = lambda cmd: check_output(['sh','-c',fmt(cmd)]).strip()
+    sh = lambda cmd: check_output(fmt(cmd),shell=True).strip()
     tmpdir = mkdtemp()
 
     if prerun is None: prerun=""
@@ -78,7 +85,7 @@ def boinc2docker_create_work(image,
 
         #generate boinc_app script
         if isinstance(command,str): command=command.split()
-        command = ' '.join(command)
+        command = ' '.join([escape_string(c) for c in command])
         entrypoint = '--entrypoint '+entrypoint if entrypoint else ''
         script = fmt(dedent("""
         #!/bin/sh
