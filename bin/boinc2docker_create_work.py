@@ -77,14 +77,14 @@ def boinc2docker_create_work(image,
                            for open_name,contents,flags in input_files]
 
         #generate boinc_app script
-        if isinstance(command,str): command=[command.split()]
-        command = ' '.join('"'+str(x)+'"' for x in command)
+        if isinstance(command,str): command=command.split()
+        command = ' '.join(command)
         entrypoint = '--entrypoint '+entrypoint if entrypoint else ''
         script = fmt(dedent("""
         #!/bin/sh
         set -e 
 
-        echo "Importing Docker data from BOINC..."
+        echo "Importing Docker image from BOINC..."
         mkdir -p /tmp/image
         cat /root/shared/image/*.tar | tar xi -C /tmp/image
         tar cf - -C /tmp/image . | docker load 
@@ -113,7 +113,7 @@ def boinc2docker_create_work(image,
         for layer in manifest[0]['Layers']:
             layer_id = split(layer)[0]
             layer_filename = fmt("layer_{layer_id}.tar")
-            layer_path = sh("bin/dir_hier_path {layer_filename}")
+            layer_path = dir_hier_path(layer_filename)
             input_files.append((fmt("shared/image/{layer_filename}"),layer_filename,layer_flags))
             if need_extract and not exists(layer_path): 
                 if verbose: print fmt("Creating input file for layer %s..."%layer_id[:12])
