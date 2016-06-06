@@ -1,7 +1,7 @@
 appname: boinc2docker
-appver: "1.00"
+appver: "1.03"
 iso: "1.0.0"
-vboxwrapper: "26182"
+vboxwrapper: "26186"
 memory: 1024
 vbox_job.xml:
   - fraction_done_filename: progress
