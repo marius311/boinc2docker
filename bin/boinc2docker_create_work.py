@@ -9,7 +9,7 @@ import tarfile
 import xml.etree.cElementTree as ET
 from Boinc.create_work import add_create_work_args, read_create_work_args, create_work, projdir, dir_hier_path
 from functools import partial
-from os.path import join, split, exists, basename
+from os.path import join, split, exists, basename, dirname
 from subprocess import check_output, CalledProcessError, STDOUT
 from xml.dom import minidom
 from inspect import currentframe
@@ -33,6 +33,7 @@ def boinc2docker_create_work(image,
                              prerun=None,
                              postrun=None,
                              verbose=True,
+                             native_unzip=False,
                              create_work_args=None):
     """
 
@@ -46,6 +47,11 @@ def boinc2docker_create_work(image,
         entrypoint - override default entrypoint
         prerun/postrun - command to run in the boinc_app script before/after the docker run
         verbose - print extra info
+        native_unzip - lets the BOINC client do the unzipping of .tar.gz files into .tar files. otherwise
+                       we do it by hand inside the VM. native_unzip=False is a workaround 
+                       for https://github.com/BOINC/boinc/issues/1572. if you've tested a specific job is not 
+                       affected by this bug, you can set native_unzip=True since its faster. otherwise
+                       native_unzip=False is safer and is the default.
         create_work_args - any extra arguments to pass to the job, e.g. {'target_nresults':1}
     """
 
@@ -72,9 +78,11 @@ def boinc2docker_create_work(image,
                 image_id = get_image_id()
             else:
                 raise
-        image_filename = fmt("image_{image_id}.tar")
+        image_filename_tar = fmt("image_{image_id}.tar")
+        image_filename = image_filename_tar + (".manual.gz" if not native_unzip else "")
         image_path = dir_hier_path(image_filename)
-
+        image_path_tar = join(dirname(image_path),image_filename_tar)
+        
         if exists(image_path):
             if verbose: print fmt("Image already imported into BOINC. Reading existing info...")
             need_extract = False
@@ -101,9 +109,11 @@ def boinc2docker_create_work(image,
         set -e 
 
         echo "Importing Docker image from BOINC..."
-        mkdir -p /tmp/image
-        cat /root/shared/image/*.tar | tar xi -C /tmp/image
-        tar cf - -C /tmp/image . | docker load 
+        mkdir -p /tmp/image/combined
+        for f in /root/shared/image/*.tar.manual.gz; do [ -e $f ] && gunzip -c $f > /tmp/image/$(basename $f .manual.gz); done
+        cat $(for f in /root/shared/image/*.tar /tmp/image/*.tar; do [ -e $f ] && echo $f; done) | tar xi -C /tmp/image/combined
+        rm  /tmp/image/*.tar
+        tar cf - -C /tmp/image/combined . | docker load
         rm -rf /tmp/image
 
         echo "Prerun diagnostics..."
@@ -123,26 +133,35 @@ def boinc2docker_create_work(image,
         """))
         input_files.append(('shared/boinc_app',('boinc_app',script),[]))
 
-        layer_flags = ['sticky','no_delete','gzip']
+        layer_flags = ['sticky','no_delete']
+        if native_unzip: layer_flags += ['gzip']
 
         #extract layers to individual tar files, directly into download dir
         for layer in manifest[0]['Layers']:
             layer_id = split(layer)[0]
-            layer_filename = fmt("layer_{layer_id}.tar")
+            layer_filename_tar = fmt("layer_{layer_id}.tar")
+            layer_filename = layer_filename_tar + (".manual.gz" if not native_unzip else "")
             layer_path = dir_hier_path(layer_filename)
-            input_files.append((fmt("shared/image/{layer_filename}"),layer_filename,layer_flags))
-            if need_extract and not exists(layer_path): 
+            layer_path_tar = join(dirname(layer_path),layer_filename_tar)
+            input_files.append((fmt("shared/image/{layer_filename}"), layer_filename, layer_flags))
+            if need_extract and not exists(layer_path_tar): 
                 if verbose: print fmt("Creating input file for layer %s..."%layer_id[:12])
-                sh("tar cvf {layer_path} -C {tmpdir} {layer_id}")
-                sh("gzip -k {layer_path}")
+                sh("tar cvf {layer_path_tar} -C {tmpdir} {layer_id}")
+                if native_unzip:
+                    sh("gzip -k {layer_path_tar}")
+                else:
+                    sh("gzip -S .manual.gz {layer_path_tar}")
 
 
         #extract remaining image info to individual tar file, directly into download dir
-        input_files.append((fmt("shared/image/{image_filename}"),image_filename,layer_flags))
+        input_files.append((fmt("shared/image/{image_filename}"), image_filename, layer_flags))
         if need_extract: 
             if verbose: print fmt("Creating input file for image %s..."%image_id[:12])
-            sh("tar cvf {image_path} -C {tmpdir} {image_id}.json manifest.json repositories")
-            sh("gzip -k {image_path}")
+            sh("tar cvf {image_path_tar} -C {tmpdir} {image_id}.json manifest.json repositories")
+            if native_unzip:
+                sh("gzip -k {image_path_tar}")
+            else:
+                sh("gzip -S .manual.gz {image_path_tar}")
 
         #generate input template
         if verbose: print fmt("Creating input template for job...")
@@ -185,6 +204,7 @@ if __name__=='__main__':
 
     #BOINC args
     parser.add_argument('--appname', default='boinc2docker', help='appname (default: boinc2docker)')
+    parser.add_argument('--native_unzip', action='store_true', help="Let the BOINC client unzip image files (Warning: may cause job to fail, pending BOINC client bug fix)")
     add_create_work_args(parser,exclude=['wu_template'])
 
     args = parser.parse_args()
@@ -193,5 +213,6 @@ if __name__=='__main__':
                                   command=args.COMMAND, 
                                   appname=args.appname,
                                   entrypoint=args.entrypoint,
+                                  native_unzip=args.native_unzip,
                                   create_work_args=read_create_work_args(args))
     if wu is not None: print wu
