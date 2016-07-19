@@ -1,4 +1,4 @@
 appname: boinc2docker
-appver: "1.04"
+appver: "1.05"
 iso: "1.0.0"
-vboxwrapper: "26186"
+vboxwrapper: "26196"
