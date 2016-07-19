@@ -6,12 +6,6 @@
    </file>
 
    <file>
-      <physical_name>{vboxjob}</physical_name>
-      <logical_name>vbox_job.xml</logical_name>      
-      <copy_file/>
-   </file>
-
-   <file>
       <physical_name>{iso}</physical_name>
       <logical_name>vm_isocontext.iso</logical_name>      
       <copy_file/>

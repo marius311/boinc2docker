@@ -70,7 +70,6 @@ defaults.update({
 args = [
     ['iso',             'boinc2docker ISO version to use'],
     ['vboxwrapper',     'vboxwrapper version to use'],
-    ['memory',          'memory (in GB) needed for app'],
     ['projhome',        'project home'],
     ['appname',         'name to give the app'],
     ['appver',          'version to give the app'],
@@ -87,7 +86,6 @@ for a,h in args:
         parser.add_argument('--'+a, default=defaults[a], help=h+' (default: %s)'%defaults[a])
     else:
         parser.add_argument('--'+a, help=h)
-# parser.add_argument('--no32bit', action='store_true', help="don't install 32bit app versions")
 parser.add_argument('boinc2docker.yml', nargs='?', help="boinc2docker.yml file containing confirugation options")
 args = attrdict(defaults,**vars(parser.parse_args()))
 if args['boinc2docker.yml'] is not None:
@@ -106,28 +104,16 @@ approot=join(args.projhome,'apps',args.appname,args.appver)
 
 makedirs(args.tmpdir)
 platforms = ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin"]
-# if not args.no32bit: 
-#     platforms += ["i686-pc-linux-gnu",  "windows_intelx86","i686-apple-darwin"]
 
 for platform in platforms:
     appfolder = join(approot,platform+'__vbox64_mt')
     makedirs(appfolder)
-    vboxjob_file = fmt("{args.appname}_{args.appver}_vbox_job.xml")
     vboxwrapper_file = get_vboxwrapper(platform)
     iso_file = get_iso()
 
     #version.xml
     open(join(appfolder,'version.xml'),'w').write(
-        open(join(rootdir,'version.xml')).read().format(vboxwrapper=basename(vboxwrapper_file),iso=basename(iso_file),vboxjob=vboxjob_file)
-    )
-
-    #vbox_job.xml
-    open(join(appfolder,vboxjob_file),'w').write(
-        open(join(rootdir,'vbox_job.xml')).read().format(
-           memory=args.memory,
-           extra='\n'.join([' '*4+('<{0}>{1}</{0}>'.format(*i.items()[0]) if isinstance(i,dict) else '<%s/>'%i)
-                            for i in args.get('vbox_job.xml',[])])
-        )
+        open(join(rootdir,'version.xml')).read().format(vboxwrapper=basename(vboxwrapper_file),iso=basename(iso_file))
     )
 
     #vboxwrapper and ISO
