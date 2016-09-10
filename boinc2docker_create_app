@@ -36,7 +36,7 @@ def get_vboxwrapper(platform):
     """
     Download and unzip vboxwrapper executables from http://boinc.berkeley.edu/dl
     """
-    vboxwrapper_root = fmt("vboxwrapper_{args.vboxwrapper}_"+platform)
+    vboxwrapper_root = fmt(("vboxwrapper_{args.vboxwrapper[%s]}_"%platform)+platform)
     vboxwrapper_file = join(args.tmpdir,vboxwrapper_root+('.exe' if 'windows' in platform else ''))
     if not exists(vboxwrapper_file): 
         with ZipFile(download('http://boinc.berkeley.edu/dl/'+vboxwrapper_root+'.zip')) as zf:
@@ -104,6 +104,9 @@ approot=join(args.projhome,'apps',args.appname,args.appver)
 
 makedirs(args.tmpdir)
 platforms = ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin"]
+if isinstance(args.vboxwrapper,str):
+    args.vboxwrapper = {platform:args.vboxwrapper for platform in platforms}
+
 
 for platform in platforms:
     appfolder = join(approot,platform+'__vbox64_mt')
@@ -171,4 +174,3 @@ for f in ['plan_class_spec.xml','project.xml']:
         xmlmerge(src,join(args.projhome,f))
     else:
         open(join(args.projhome,f),'w').write(src)
-
