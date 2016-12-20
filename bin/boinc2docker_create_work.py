@@ -1,21 +1,23 @@
 #!/usr/bin/env python
 
 import argparse
-import boinc_path_config
 import json
-import sys
 import os
+import sys
 import tarfile
 import xml.etree.cElementTree as ET
-from Boinc.create_work import add_create_work_args, read_create_work_args, create_work, projdir, dir_hier_path
 from functools import partial
-from os.path import join, split, exists, basename, dirname, getsize
-from subprocess import check_output, CalledProcessError, STDOUT
-from xml.dom import minidom
 from inspect import currentframe
+from os.path import basename, dirname, exists, getsize, join, split
+from subprocess import STDOUT, CalledProcessError, check_output
+from tempfile import mkdtemp
 from textwrap import dedent
 from uuid import uuid4 as uuid
-from tempfile import mkdtemp
+from xml.dom import minidom
+
+import boinc_path_config
+from Boinc.create_work import (add_create_work_args, create_work,
+                               dir_hier_path, projdir, read_create_work_args)
 
 
 def boinc2docker_create_work(image,
@@ -25,6 +27,7 @@ def boinc2docker_create_work(image,
                              entrypoint=None,
                              prerun=None,
                              postrun=None,
+                             sshgrid_mode=False,
                              verbose=True,
                              native_unzip=False,
                              memory=None,
@@ -63,6 +66,7 @@ def boinc2docker_create_work(image,
     if prerun is None: prerun=""
     if postrun is None: postrun=""
     if command is None: command=""
+    if input_files is None: input_files=[]
     if create_work_args is None: create_work_args=dict()
     if ':' not in image: image+=':latest'
 
@@ -102,13 +106,6 @@ def boinc2docker_create_work(image,
             manifest = json.load(open(join(tmpdir,'manifest.json')))
 
 
-        #start with any extra custom input files
-        if input_files is None: input_files=[]
-        else: 
-            input_files = [(open_name,(basename(open_name),contents),flags) 
-                           for open_name,contents,flags in input_files]
-
-
         #vbox_job.xml
         if vbox_job_xml is None: vbox_job_xml = []
         if disable_automatic_checkpoints: vbox_job_xml.append('disable_automatic_checkpoints')
@@ -130,14 +127,49 @@ def boinc2docker_create_work(image,
 
         </vbox_job>
         """))
-
-        input_files.append(("vbox_job.xml",("vbox_job.xml",vbox_job_xml_contents),[]))
+        input_files.append(("vbox_job.xml",vbox_job_xml_contents,[]))
 
 
         #generate boinc_app script
         if isinstance(command,str): command=command.split()
         command = ' '.join([escape_string(c) for c in command])
         entrypoint = '--entrypoint '+entrypoint if entrypoint else ''
+        
+        if sshgrid_mode:
+            from Boinc import configxml
+            from urlparse import urlparse
+            import sqlite3
+            
+            server = urlparse(configxml.ConfigFile().read().config.master_url).hostname
+            sshgrid = fmt(dedent("""
+            echo "Starting SSH server..."
+            /etc/rc.d/sshd
+            
+            echo "Reverse tunneling to server..."
+            mkdir /root/shared/.ssh
+            cp /root/shared/id_rsa /root/shared/id_rsa.pub /root/shared/authorized_keys /root/shared/.ssh
+            ssh -p 422 -NTR 0:localhost:22 sshgrid@{server} &
+            """))
+            
+            if verbose: print "Setting up sshgrid job..."
+            client_pub, client_priv, client_fingerprint = ssh_keygen(tmpdir)
+            server_pub, server_priv, _           = ssh_keygen(tmpdir)
+            
+            conn = sqlite3.connect("/sshgrid/keys.db")
+            c = conn.cursor()
+            c.execute("CREATE TABLE IF NOT EXISTS keys"
+                      "(client_pub, client_priv, client_fingerprint, server_pub, server_priv, create_date)")
+            c.execute("INSERT INTO keys VALUES (?,?,?,?,?,datetime('now'))", 
+                      (client_pub, client_priv, client_fingerprint, server_pub, server_priv))
+            conn.commit()
+            conn.close()
+            
+            input_files.append(('shared/id_rsa',client_priv,[]))
+            input_files.append(('shared/id_rsa.pub',client_pub,[]))
+            input_files.append(('shared/authorized_keys',server_pub,[]))
+        else:
+            sshgrid = ""
+        
         script = fmt(dedent("""
         #!/bin/sh
         set -e 
@@ -156,6 +188,8 @@ def boinc2docker_create_work(image,
         du -sh /var/lib/docker
         free -m
 
+        {sshgrid}
+
         echo "Prerun commands..."
         {prerun}
 
@@ -165,7 +199,12 @@ def boinc2docker_create_work(image,
         echo "Postrun commands..."
         {postrun}
         """))
-        input_files.append(('shared/boinc_app',('boinc_app',script),[]))
+        input_files.append(('shared/boinc_app',script,[]))
+        
+        
+        # before input_files stored (open_name, contents, flags), now change to...
+        input_files = [(open_name,(basename(open_name),contents),flags) 
+                       for open_name,contents,flags in input_files]
 
         layer_flags = ['sticky','no_delete']
         if native_unzip: layer_flags += ['gzip']
@@ -265,6 +304,20 @@ def escape_string(s):
     return check_output(["bash","-c",'printf "%q" "$@"','_', s])
 
 
+def ssh_keygen(tmpdir):
+    """
+    Return a pair of (public,private,fingerprint) keys by running ssh-keygen
+    using the temporary folder tmpdir 
+    """
+    check_output('echo y | ssh-keygen -C sshgrid -t rsa -b 4096 -P "" -f '+join(tmpdir,'id_rsa'), shell=True)
+    fingerprint = check_output('ssh-keygen -l -f '+join(tmpdir,'id_rsa'),shell=True).split()[1]
+    with open(join(tmpdir,'id_rsa')) as priv: 
+        with open(join(tmpdir,'id_rsa.pub')) as pub:  
+            return pub.read().strip(), priv.read().strip(), fingerprint
+    
+    
+
+
 if __name__=='__main__':
 
     parser = argparse.ArgumentParser(prog='boinc2docker_create_work')
@@ -283,6 +336,7 @@ if __name__=='__main__':
     #other args
     parser.add_argument('--quiet', action="store_true", help="Don't print alot of messages.")
     parser.add_argument('--force_reimport', action="store_true", help="Force reimporting the image from Docker (might fix a corrupt previous import).")
+    parser.add_argument('--sshgrid_mode', action="store_true", help="Run with sshgrid mode enabled.")
 
 
     args = parser.parse_args()
@@ -293,6 +347,7 @@ if __name__=='__main__':
                                   entrypoint=args.entrypoint,
                                   native_unzip=args.native_unzip,
                                   memory=args.memory,
+                                  sshgrid_mode=args.sshgrid_mode,
                                   create_work_args=read_create_work_args(args),
                                   verbose=(not args.quiet),
                                   force_reimport=args.force_reimport)
