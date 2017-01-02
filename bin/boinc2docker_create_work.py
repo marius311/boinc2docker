@@ -140,33 +140,44 @@ def boinc2docker_create_work(image,
             from urlparse import urlparse
             import sqlite3
             
+            if verbose: print "Configuring sshgrid job..."
+            
             server = urlparse(configxml.ConfigFile().read().config.master_url).hostname
+            client_username = "sshgrid-"+str(uuid())
             sshgrid = fmt(dedent("""
             echo "Starting SSH server..."
             /etc/rc.d/sshd
             
+            echo 10.0.2.2 {server} >> /etc/hosts # for debugging on local machine
+            
             echo "Reverse tunneling to server..."
-            mkdir /root/shared/.ssh
-            cp /root/shared/id_rsa /root/shared/id_rsa.pub /root/shared/authorized_keys /root/shared/.ssh
-            ssh -p 422 -NTR 0:localhost:22 sshgrid@{server} &
+            mkdir /root/.ssh
+            cp /root/shared/id_rsa /root/shared/id_rsa.pub /root/shared/authorized_keys /root/.ssh
+            chmod 600 /root/.ssh/id_rsa
+            ssh -o StrictHostKeyChecking=no -p 422 -NTR 0:localhost:22 {client_username}@{server}
             """))
             
-            if verbose: print "Setting up sshgrid job..."
-            client_pub, client_priv, client_fingerprint = ssh_keygen(tmpdir)
-            server_pub, server_priv, _           = ssh_keygen(tmpdir)
+            client_pub, client_priv = ssh_keygen(tmpdir)
+            _,          server_priv = ssh_keygen(tmpdir)
             
-            conn = sqlite3.connect("/sshgrid/keys.db")
-            c = conn.cursor()
-            c.execute("CREATE TABLE IF NOT EXISTS keys"
-                      "(client_pub, client_priv, client_fingerprint, server_pub, server_priv, create_date)")
-            c.execute("INSERT INTO keys VALUES (?,?,?,?,?,datetime('now'))", 
-                      (client_pub, client_priv, client_fingerprint, server_pub, server_priv))
-            conn.commit()
-            conn.close()
+            with sqlite3.connect("/sshgrid/keys.db") as conn:
+                c = conn.cursor()
+                c.execute("CREATE TABLE IF NOT EXISTS keys"
+                          "(client_key, client_username, server_key, create_date, used)")
+                c.execute("INSERT INTO keys VALUES (?,?,?,datetime('now'),0)", 
+                          (client_priv, client_username, server_priv))
+                conn.commit()
             
             input_files.append(('shared/id_rsa',client_priv,[]))
             input_files.append(('shared/id_rsa.pub',client_pub,[]))
             input_files.append(('shared/authorized_keys',server_pub,[]))
+            
+            create_work_args.update(dict(
+                max_total_results = 1,
+                max_success_results = 1,
+                max_error_results = 1,
+                target_nresults = 1
+            ))
         else:
             sshgrid = ""
         
@@ -306,14 +317,14 @@ def escape_string(s):
 
 def ssh_keygen(tmpdir):
     """
-    Return a pair of (public,private,fingerprint) keys by running ssh-keygen
+    Return a pair of (public,private) keys by running ssh-keygen
     using the temporary folder tmpdir 
     """
     check_output('echo y | ssh-keygen -C sshgrid -t rsa -b 4096 -P "" -f '+join(tmpdir,'id_rsa'), shell=True)
-    fingerprint = check_output('ssh-keygen -l -f '+join(tmpdir,'id_rsa'),shell=True).split()[1]
+    # fingerprint = check_output('ssh-keygen -l -f '+join(tmpdir,'id_rsa'),shell=True).split()[1]
     with open(join(tmpdir,'id_rsa')) as priv: 
         with open(join(tmpdir,'id_rsa.pub')) as pub:  
-            return pub.read().strip(), priv.read().strip(), fingerprint
+            return pub.read().strip(), priv.read().strip()#, fingerprint
     
     
 
