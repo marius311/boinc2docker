@@ -182,9 +182,9 @@ def boinc2docker_create_work(image,
                 if verbose: print fmt("Creating input file for layer %s..."%layer_id[:12])
                 sh("tar cvf {layer_path_tar} -C {tmpdir} {layer_id}")
                 if native_unzip:
-                    sh("gzip -fk {layer_path_tar}")
+                    sh("gzip -nfk {layer_path_tar}")
                 else:
-                    sh("gzip -fS .manual.gz {layer_path_tar}")
+                    sh("gzip -nfS .manual.gz {layer_path_tar}")
 
 
         #extract remaining image info to individual tar file, directly into download dir
@@ -193,9 +193,9 @@ def boinc2docker_create_work(image,
             if verbose: print fmt("Creating input file for image %s..."%image_id[:12])
             sh("tar cvf {image_path_tar} -C {tmpdir} {image_id}.json manifest.json repositories")
             if native_unzip:
-                sh("gzip -fk {image_path_tar}")
+                sh("gzip -nfk {image_path_tar}")
             else:
-                sh("gzip -fS .manual.gz {image_path_tar}")
+                sh("gzip -nfS .manual.gz {image_path_tar}")
 
         #generate input template
         if verbose: print fmt("Creating input template for job...")
