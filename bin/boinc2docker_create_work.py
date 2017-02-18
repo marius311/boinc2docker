@@ -27,6 +27,7 @@ def boinc2docker_create_work(image,
                              postrun=None,
                              verbose=True,
                              native_unzip=False,
+                             memory=None,
                              disable_automatic_checkpoints=True,
                              progress_file=None,
                              vbox_job_xml=None,
@@ -65,6 +66,10 @@ def boinc2docker_create_work(image,
     if create_work_args is None: create_work_args=dict()
     if ':' not in image: image+=':latest'
 
+    if memory: 
+        print('WARNING: --memory is deprecated and will be removed in a future version. Use --rsc_memory_bound instead.')
+        create_work_args['rsc_memory_bound'] = memory*1e6
+
 
     need_extract = False
 
@@ -90,9 +95,8 @@ def boinc2docker_create_work(image,
         
         # configure memory/disk bounds
         image_size = get_image_size(image)
-        memory = int(memory_check(image_size, create_work_args.get('rsc_memory_bound'), verbose))
-        create_work_args['rsc_memory_bound'] = memory*1024**2
-        create_work_args['rsc_disk_bound'] = int(disk_check(image_size, create_work_args.get('rsc_disk_bound'), verbose))*1024**2
+        create_work_args['rsc_memory_bound'] = int(memory_check(image_size, create_work_args.get('rsc_memory_bound'), verbose))
+        create_work_args['rsc_disk_bound'] = int(disk_check(image_size, create_work_args.get('rsc_disk_bound'), verbose))
 
         if not force_reimport and exists(image_path):
             if verbose: print fmt("Image already imported into BOINC. Reading existing info...")
@@ -114,7 +118,7 @@ def boinc2docker_create_work(image,
         #vbox_job.xml
         if vbox_job_xml is None: vbox_job_xml = []
         if disable_automatic_checkpoints: vbox_job_xml.append('disable_automatic_checkpoints')
-        vbox_job_xml.append({'memory_size_mb':memory})
+        vbox_job_xml.append({'memory_size_mb':int(create_work_args['rsc_memory_bound']/1e6)})
 
         extra_opts = '\n'.join([' '*4+('<{0}>{1}</{0}>'.format(*i.items()[0]) if isinstance(i,dict) else '<%s/>'%i)
                                 for i in vbox_job_xml])
@@ -230,7 +234,7 @@ def boinc2docker_create_work(image,
 
 def get_image_size(image):
     """
-    Get the size of Docker image in MB  
+    Get the size of Docker image in bytes  
     """
     output = check_output("docker images --format '{{ .Size }}' "+image,shell=True,stderr=STDOUT).splitlines()
     if len(output)==0: 
@@ -238,7 +242,7 @@ def get_image_size(image):
     elif len(output)>1:
         raise Exception("Trying to get size of ambiguous image name '%s'"%image)
     val, units = output[0].split()
-    return float(val)*10**({'B':0,'KB':3,'MB':6,'GB':9}[units]) / 1e6
+    return float(val)*10**({'B':0,'KB':3,'MB':6,'GB':9}[units])
 
 
 def memory_check(imagesize, memory, verbose=False):
@@ -246,13 +250,13 @@ def memory_check(imagesize, memory, verbose=False):
     Check we've got enough memory to `docker load` the image (and possibly unzip it)
     """
     # note: this should shrink to 1 (maybe 2) times imagesize once we have the vm_cache disk
-    need = 4*imagesize + 500
+    need = 4*imagesize + 500e6
 
     if memory is None:
-        if verbose: print("Automatically setting memory allocation for job to %iMB."%need)
+        if verbose: print("Automatically setting memory allocation for job to %iMB."%int(need/1e6))
         return need
     elif memory<need: 
-        if verbose: print("Warning: you allocated %iMB of memory for this job which is less than the prediceted minumum needed of %iMB; job may fail."%(memory,need))
+        if verbose: print("Warning: you allocated %iMB of memory for this job which is less than the prediceted minumum needed of %iMB; job may fail."%(int(memory/1e6),int(need/1e6)))
         return memory
     else:
         return memory
@@ -261,13 +265,13 @@ def disk_check(imagesize, disk, verbose=False):
     """
     Check we've got enough disk space to house the docker image input files
     """
-    need = imagesize + 100
+    need = imagesize + 100e6
 
     if disk is None:
-        if verbose: print("Automatically setting disk allocation for job to %iMB."%need)
+        if verbose: print("Automatically setting disk allocation for job to %iMB."%int(need/1e6))
         return need
     elif disk<need: 
-        if verbose: print("Warning: you allocated %iMB of disk space for this job which is less than the prediceted minumum needed of %iMB; job may fail."%(disk,need))
+        if verbose: print("Warning: you allocated %iMB of disk space for this job which is less than the prediceted minumum needed of %iMB; job may fail."%(int(disk/1e6),int(need/1e6)))
         return disk
     else:
         return disk
@@ -293,9 +297,9 @@ if __name__=='__main__':
     #BOINC args
     parser.add_argument('--appname', default='boinc2docker', help='appname (default: boinc2docker)')
     parser.add_argument('--native_unzip', action='store_true', help="Let the BOINC client unzip image files (Warning: may cause job to fail, pending BOINC client bug fix)")
-    parser.add_argument('--memory', type=int, help='deprecated: use --rsc_memory_bound instead')
-    parser.add_argument('--rsc_memory_bound', type=int, help='memory in MB needed by this job (default: minimum needed to load Docker image)')
-    parser.add_argument('--rsc_disk_bound', type=int, help='disk space in MB needed by this job (default: minimum needed to load Docker image)')
+    parser.add_argument('--memory', type=int, help='deprecated: use --rsc_memory_bound instead.')
+    parser.add_argument('--rsc_memory_bound', type=int, metavar='n', help='memory in bytes needed by this job (default: minimum needed to load Docker image)')
+    parser.add_argument('--rsc_disk_bound', type=int, metavar='n', help='disk space in bytes needed by this job (default: minimum needed to load Docker image)')
     add_create_work_args(parser,exclude=['wu_template','rsc_memory_bound','rsc_disk_bound'])
     
     #other args
@@ -304,14 +308,12 @@ if __name__=='__main__':
 
 
     args = parser.parse_args()
-    if args.memory: 
-        print('WARNING: --memory is deprecated and will be removed in a future version. Use --rsc_memory_bound instead.')
-        args.rsc_memory_bound = args.memory
 
     wu = boinc2docker_create_work(image=args.IMAGE, 
                                   command=args.COMMAND, 
                                   appname=args.appname,
                                   entrypoint=args.entrypoint,
+                                  memory=args.memory,
                                   native_unzip=args.native_unzip,
                                   create_work_args=read_create_work_args(args),
                                   verbose=(not args.quiet),
