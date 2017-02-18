@@ -27,7 +27,6 @@ def boinc2docker_create_work(image,
                              postrun=None,
                              verbose=True,
                              native_unzip=False,
-                             memory=None,
                              disable_automatic_checkpoints=True,
                              progress_file=None,
                              vbox_job_xml=None,
@@ -89,8 +88,11 @@ def boinc2docker_create_work(image,
         image_path = dir_hier_path(image_filename)
         image_path_tar = join(dirname(image_path),image_filename_tar)
         
-        memory = int(memory_check(int(sh('docker inspect --format "{{{{ .Size }}}}" {image}'))/1e6, memory, verbose))
-        create_work_args['rsc_memory_bound'] = memory*1e6
+        # configure memory/disk bounds
+        image_size = get_image_size(image)
+        memory = int(memory_check(image_size, create_work_args.get('rsc_memory_bound'), verbose))
+        create_work_args['rsc_memory_bound'] = memory*1024**2
+        create_work_args['rsc_disk_bound'] = int(disk_check(image_size, create_work_args.get('rsc_disk_bound'), verbose))*1024**2
 
         if not force_reimport and exists(image_path):
             if verbose: print fmt("Image already imported into BOINC. Reading existing info...")
@@ -242,7 +244,6 @@ def get_image_size(image):
 def memory_check(imagesize, memory, verbose=False):
     """
     Check we've got enough memory to `docker load` the image (and possibly unzip it)
-    and increase it if not.  
     """
     # note: this should shrink to 1 (maybe 2) times imagesize once we have the vm_cache disk
     need = 4*imagesize + 500
@@ -255,6 +256,21 @@ def memory_check(imagesize, memory, verbose=False):
         return memory
     else:
         return memory
+
+def disk_check(imagesize, disk, verbose=False):
+    """
+    Check we've got enough disk space to house the docker image input files
+    """
+    need = imagesize + 100
+
+    if disk is None:
+        if verbose: print("Automatically setting disk allocation for job to %iMB."%need)
+        return need
+    elif disk<need: 
+        if verbose: print("Warning: you allocated %iMB of disk space for this job which is less than the prediceted minumum needed of %iMB; job may fail."%(disk,need))
+        return disk
+    else:
+        return disk
 
 
 def escape_string(s):
@@ -276,23 +292,27 @@ if __name__=='__main__':
 
     #BOINC args
     parser.add_argument('--appname', default='boinc2docker', help='appname (default: boinc2docker)')
-    parser.add_argument('--memory', type=int, help='memory in MB needed by this job (default: minimum needed to load Docker image)')
     parser.add_argument('--native_unzip', action='store_true', help="Let the BOINC client unzip image files (Warning: may cause job to fail, pending BOINC client bug fix)")
-    add_create_work_args(parser,exclude=['wu_template'])
-
+    parser.add_argument('--memory', type=int, help='deprecated: use --rsc_memory_bound instead')
+    parser.add_argument('--rsc_memory_bound', type=int, help='memory in MB needed by this job (default: minimum needed to load Docker image)')
+    parser.add_argument('--rsc_disk_bound', type=int, help='disk space in MB needed by this job (default: minimum needed to load Docker image)')
+    add_create_work_args(parser,exclude=['wu_template','rsc_memory_bound','rsc_disk_bound'])
+    
     #other args
     parser.add_argument('--quiet', action="store_true", help="Don't print alot of messages.")
     parser.add_argument('--force_reimport', action="store_true", help="Force reimporting the image from Docker (might fix a corrupt previous import).")
 
 
     args = parser.parse_args()
+    if args.memory: 
+        print('WARNING: --memory is deprecated and will be removed in a future version. Use --rsc_memory_bound instead.')
+        args.rsc_memory_bound = args.memory
 
     wu = boinc2docker_create_work(image=args.IMAGE, 
                                   command=args.COMMAND, 
                                   appname=args.appname,
                                   entrypoint=args.entrypoint,
                                   native_unzip=args.native_unzip,
-                                  memory=args.memory,
                                   create_work_args=read_create_work_args(args),
                                   verbose=(not args.quiet),
                                   force_reimport=args.force_reimport)
