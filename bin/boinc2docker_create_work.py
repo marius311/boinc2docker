@@ -68,20 +68,25 @@ def boinc2docker_create_work(image,
 
 
     need_extract = False
-
+    
+    # tmp dir only created on-demand to reduce disk access
+    _tmpdir=[None]
+    def tmpdir():
+        if _tmpdir[0] is None: 
+            _tmpdir[0] = mkdtemp()
+            print("created "+_tmpdir[0])
+        return _tmpdir[0]
+        
     try:
 
-        tmpdir = mkdtemp()
-
         #get entire image as a tar file
-        def get_image_id(): return sh('docker inspect --format "{{{{ .Id }}}}" {image}').strip().split(':')[1]
         try:
-            image_id = get_image_id()
+            image_id = get_image_id(image)
         except CalledProcessError as e:
             if 'No such image' in e.output:
                 if verbose: print fmt("Pulling '{image}'...")
                 sh('docker pull {image}')
-                image_id = get_image_id()
+                image_id = get_image_id(image)
             else:
                 raise
         image_filename_tar = fmt("image_{image_id}.tar")
@@ -89,18 +94,17 @@ def boinc2docker_create_work(image,
         image_path = dir_hier_path(image_filename)
         image_path_tar = join(dirname(image_path),image_filename_tar)
         
-        memory = int(memory_check(int(sh('docker inspect --format "{{{{ .Size }}}}" {image}'))/1e6, memory, verbose))
+        memory = get_memory(image,memory,verbose)
         create_work_args['rsc_memory_bound'] = memory*1e6
 
         if not force_reimport and exists(image_path):
             if verbose: print fmt("Image already imported into BOINC. Reading existing info...")
-            manifest = json.load(tarfile.open(image_path).extractfile('manifest.json'))
+            manifest = get_manifest(image_path)
         else:
             if verbose: print fmt("Exporting '{image}' to tar file...")
             need_extract = True
-            sh("docker save {image} | tar xf - -C {tmpdir}")
-            manifest = json.load(open(join(tmpdir,'manifest.json')))
-
+            sh("docker save {image} | tar xf - -C %s"%tmpdir())
+            manifest = json.load(open(join(tmpdir(),'manifest.json')))
 
         #start with any extra custom input files
         if input_files is None: input_files=[]
@@ -180,7 +184,7 @@ def boinc2docker_create_work(image,
             input_files.append((fmt("shared/image/{layer_filename}"), layer_filename, layer_flags))
             if force_reimport or (need_extract and not exists(layer_path)): 
                 if verbose: print fmt("Creating input file for layer %s..."%layer_id[:12])
-                sh("tar cvf {layer_path_tar} -C {tmpdir} {layer_id}")
+                sh("tar cvf {layer_path_tar} -C %s {layer_id}"%tmpdir())
                 if native_unzip:
                     sh("gzip -fk {layer_path_tar}")
                 else:
@@ -191,7 +195,7 @@ def boinc2docker_create_work(image,
         input_files.append((fmt("shared/image/{image_filename}"), image_filename, layer_flags))
         if force_reimport or need_extract: 
             if verbose: print fmt("Creating input file for image %s..."%image_id[:12])
-            sh("tar cvf {image_path_tar} -C {tmpdir} {image_id}.json manifest.json repositories")
+            sh("tar cvf {image_path_tar} -C %s {image_id}.json manifest.json repositories"%tmpdir())
             if native_unzip:
                 sh("gzip -fk {image_path_tar}")
             else:
@@ -209,7 +213,7 @@ def boinc2docker_create_work(image,
             ET.SubElement(fileref, "file_number").text = str(i)
             ET.SubElement(fileref, "open_name").text = open_name
             ET.SubElement(fileref, "copy_file")
-        template_file = join(tmpdir,'boinc2docker_in_'+uuid().hex)
+        template_file = join(tmpdir(),'boinc2docker_in_'+uuid().hex)
         open(template_file,'w').write(minidom.parseString(ET.tostring(root, 'utf-8')).toprettyxml(indent=" "*4))
 
         create_work_args['wu_template'] = template_file
@@ -222,10 +226,46 @@ def boinc2docker_create_work(image,
     finally:
         # cleanup
         try:
-            sh("rm -rf {tmpdir}")
+            if _tmpdir[0] is not None:
+                sh("rm -rf %s"%tmpdir())
         except:
             pass
 
+
+def sh(cmd):
+    return check_output(cmd,shell=True,stderr=STDOUT).strip()
+
+
+# some quantities memoized here since they require disk access
+# and under high server load can be quite prohibitive
+
+# http://code.activestate.com/recipes/578231-probably-the-fastest-memoization-decorator-in-the-/
+def memoize(f):
+    """ Memoization decorator for a function taking one or more arguments. """
+    class memodict(dict):
+        def __getitem__(self, *key):
+            return dict.__getitem__(self, key)
+        def __missing__(self, key):
+            ret = self[key] = f(*key)
+            return ret
+    return memodict().__getitem__
+
+@memoize
+def get_image_id(image): 
+    print("get_image_id")
+    return sh('docker inspect --format "{{ .Id }}" '+image).strip().split(':')[1]
+
+@memoize
+def get_memory(image,memory,verbose):
+    print("get_memory")
+    return int(memory_check(int(sh('docker inspect --format "{{ .Size }}" '+image))/1e6, memory, verbose))
+
+@memoize
+def get_manifest(image_path):
+    print("get_manifest")
+    return json.load(tarfile.open(image_path).extractfile('manifest.json'))
+
+@memoize
 def get_image_size(image):
     """
     Get the size of Docker image in MB  
@@ -279,7 +319,7 @@ if __name__=='__main__':
     parser.add_argument('--memory', type=int, help='memory in MB needed by this job (default: minimum needed to load Docker image)')
     parser.add_argument('--native_unzip', action='store_true', help="Let the BOINC client unzip image files (Warning: may cause job to fail, pending BOINC client bug fix)")
     add_create_work_args(parser,exclude=['wu_template'])
-
+    
     #other args
     parser.add_argument('--quiet', action="store_true", help="Don't print alot of messages.")
     parser.add_argument('--force_reimport', action="store_true", help="Force reimporting the image from Docker (might fix a corrupt previous import).")
