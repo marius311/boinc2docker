@@ -1,0 +1,10 @@
+<boinc>
+    <daemons>
+        <daemon>
+            <cmd>script_assimilator --app boinc2docker --script "boinc2docker_assimilator files"</cmd>
+        </daemon>
+        <daemon>
+            <cmd>sample_trivial_validator -app boinc2docker</cmd>
+        </daemon>
+    </daemons>
+</boinc>

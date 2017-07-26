@@ -140,9 +140,9 @@ if "assimilator" not in args.dont_install:
     chmod(assimilator_file,0755)
 
 
-# merge stuff into plan_class_spec.xml and project.xml
+# merge stuff into plan_class_spec.xml and project.xml and config.xml
 
-def xmlmerge(src,dst,idkey='name'):
+def xmlmerge(src,dst,idkey='name',mergeat='./'):
     """
     Merge the XML elements from the string `src` into the file at filename
     `dst`. Merges only at the first level and compares elements via their
@@ -150,11 +150,11 @@ def xmlmerge(src,dst,idkey='name'):
     """
     dtree=et.parse(dst)
     droot=dtree.getroot()
-    for sc in et.fromstring(src).findall('./'):
-        for dc in droot.findall(sc.tag):
+    for sc in et.fromstring(src).findall(mergeat):
+        for dc in droot.findall(mergeat+sc.tag):
             if dc.find(idkey).text==sc.find(idkey).text: break
         else:
-            droot.append(sc)
+            droot.find(mergeat.rstrip('/')).append(sc)
 
     #from boincxml.py
     def strip_white_space(node):
@@ -166,11 +166,13 @@ def xmlmerge(src,dst,idkey='name'):
                 strip_white_space(child)
         return node
 
-    open(dst,'w').write(strip_white_space(minidom.parseString(et.tostring(droot))).toprettyxml(indent=" "*4))
+    open(dst,'w').write(strip_white_space(minidom.parseString(et.tostring(droot))).toprettyxml(indent=" "*4).replace('&quot;','"'))
 
-for f in ['plan_class_spec.xml','project.xml']:
+for f,k,m in [('plan_class_spec.xml','name', './'),
+              ('project.xml',        'name', './'),
+              ('config.xml',         'cmd',  './daemons/')]:
     src=fmt(open(join(rootdir,f)).read())
     if exists(join(args.projhome,f)):
-        xmlmerge(src,join(args.projhome,f))
+        xmlmerge(src,join(args.projhome,f),idkey=k,mergeat=m)
     else:
         open(join(args.projhome,f),'w').write(src)
