@@ -78,7 +78,6 @@ def boinc2docker_create_work(image,
     def tmpdir():
         if _tmpdir[0] is None: 
             _tmpdir[0] = mkdtemp()
-            print("created "+_tmpdir[0])
         return _tmpdir[0]
 
     try:
@@ -259,17 +258,14 @@ def memoize(f):
 
 @memoize
 def get_image_id(image): 
-    print("get_image_id")
     return sh('docker inspect --format "{{ .Id }}" '+image).strip().split(':')[1]
 
 @memoize
 def get_memory(image,memory,verbose):
-    print("get_memory")
     return int(memory_check(int(sh('docker inspect --format "{{ .Size }}" '+image))/1e6, memory, verbose))
 
 @memoize
 def get_manifest(image_path):
-    print("get_manifest")
     return json.load(tarfile.open(image_path).extractfile('manifest.json'))
 
 @memoize
