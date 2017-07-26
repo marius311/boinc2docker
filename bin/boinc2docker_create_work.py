@@ -337,7 +337,6 @@ if __name__=='__main__':
 
     #BOINC args
     parser.add_argument('--appname', default='boinc2docker', help='appname (default: boinc2docker)')
-    parser.add_argument('--memory', type=int, help='memory in MB needed by this job (default: minimum needed to load Docker image)')
     parser.add_argument('--native_unzip', action='store_true', help="Let the BOINC client unzip image files (Warning: may cause job to fail, pending BOINC client bug fix)")
     parser.add_argument('--memory', type=int, help='deprecated: use --rsc_memory_bound instead.')
     parser.add_argument('--rsc_memory_bound', type=int, metavar='n', help='memory in bytes needed by this job (default: minimum needed to load Docker image)')
@@ -355,7 +354,6 @@ if __name__=='__main__':
                                   command=args.COMMAND, 
                                   appname=args.appname,
                                   entrypoint=args.entrypoint,
-                                  memory=args.memory,
                                   native_unzip=args.native_unzip,
                                   memory=args.memory,
                                   create_work_args=read_create_work_args(args),
