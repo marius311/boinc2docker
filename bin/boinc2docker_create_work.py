@@ -210,11 +210,12 @@ def boinc2docker_create_work(image,
         #generate input template
         if verbose: print fmt("Creating input template for job...")
         root = ET.Element("input_template")
-        workunit = ET.SubElement(root, "workunit")
         for i,(open_name,_,flags) in enumerate(input_files):
             fileinfo = ET.SubElement(root, "file_info")
             ET.SubElement(fileinfo, "number").text = str(i)
             for flag in flags: ET.SubElement(fileinfo, flag)
+        workunit = ET.SubElement(root, "workunit")
+        for i,(open_name,_,flags) in enumerate(input_files):
             fileref = ET.SubElement(workunit, "file_ref")
             ET.SubElement(fileref, "file_number").text = str(i)
             ET.SubElement(fileref, "open_name").text = open_name
