@@ -16,6 +16,7 @@ from inspect import currentframe
 from textwrap import dedent
 from uuid import uuid4 as uuid
 from tempfile import mkdtemp
+from itertools import groupby
 
 
 def boinc2docker_create_work(image,
@@ -278,7 +279,7 @@ def get_image_size(image):
         raise Exception("Trying to get size of unknown image '%s'"%image)
     elif len(output)>1:
         raise Exception("Trying to get size of ambiguous image name '%s'"%image)
-    val, units = output[0].split()
+    val, units = ["".join(x) for _, x in groupby(output[0], key=str.isalpha)]
     return float(val)*10**({'B':0,'KB':3,'MB':6,'GB':9}[units])
 
 
@@ -356,3 +357,4 @@ if __name__=='__main__':
                                   verbose=(not args.quiet),
                                   force_reimport=args.force_reimport)
     if wu is not None: print wu
+
