@@ -3,7 +3,7 @@
 <output_template>
 
     <file_info>
-        <name><OUTFILE_0/></name>
+        <name><OUTFILE_0/>.tgz</name>
         <generated_locally/>
         <upload_when_present/>
         <max_nbytes>134217728</max_nbytes> <!-- 100Mb -->
@@ -12,7 +12,7 @@
 
     <result>
         <file_ref>
-            <file_name><OUTFILE_0/></file_name>
+            <file_name><OUTFILE_0/>.tgz</file_name>
             <open_name>shared/results.tgz</open_name>
             <copy_file>1</copy_file>
         </file_ref>
