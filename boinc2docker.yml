@@ -1,7 +1,7 @@
 appname: boinc2docker
-appver: "1.06" # appver must be bumped up any time iso or vboxwrapper versions change
+appver: "1.07" # appver must be bumped up any time iso or vboxwrapper versions change
 iso: "1.0.0"
 vboxwrapper:
-    x86_64-pc-linux-gnu: "26196"
-    windows_x86_64: "26197"
-    x86_64-apple-darwin: "26196"
+    x86_64-pc-linux-gnu: "26198"
+    windows_x86_64: "26200"
+    x86_64-apple-darwin: "26199"
