@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import argparse
+import sys
 from os import fchmod, environ, chmod, makedirs as _makedirs
 from os.path import join, exists, basename, dirname, abspath
 import yaml
@@ -77,7 +78,6 @@ args = [
     ['tmpdir',          "where to store downloaded ISO and vboxwrapper exe's"],
     ['dont_install',    'one or more of ["template_in","template_out","assimilator"'],
 ]
-
 parser = argparse.ArgumentParser(prog='boinc2docker_create_app')
 for a,h in args: 
     if a == 'dont_install':
@@ -87,27 +87,36 @@ for a,h in args:
     else:
         parser.add_argument('--'+a, help=h)
 parser.add_argument('boinc2docker.yml', nargs='?', help="boinc2docker.yml file containing confirugation options")
+parser.add_argument('--download_only', action="store_true", help="just download the vboxwrapper/ISO files but dont install")
+
 args = attrdict(defaults,**vars(parser.parse_args()))
 if args['boinc2docker.yml'] is not None:
     args.update(yaml.load(open(args['boinc2docker.yml'])))
 if args.resultsdir is None:
     args.resultsdir = join('/results',args.appname)
-if not args.projhome: raise ValueError("Please specify either --projhome option or $PROJHOME variable")
+if not (args.projhome or args.download_only): 
+    raise ValueError("Please specify either --projhome option, $PROJHOME variable, or --download_only")
 for x in args.dont_install:
     if x not in ['template_in','template_out','assimilator']:
         raise ValueError("Unrecognized argument '%s' given to --dont_install"%x)
-approot=join(args.projhome,'apps',args.appname,args.appver)
 
 
-
-# create app versions
 
 makedirs(args.tmpdir)
-platforms = ["x86_64-pc-linux-gnu","windows_x86_64",  "x86_64-apple-darwin"]
+platforms = ["x86_64-pc-linux-gnu", "windows_x86_64", "x86_64-apple-darwin"]
 if isinstance(args.vboxwrapper,str):
     args.vboxwrapper = {platform:args.vboxwrapper for platform in platforms}
 
+# if download_only, get the files then exit
 
+if args.download_only:
+    for platform in platforms: get_vboxwrapper(platform)
+    get_iso()
+    sys.exit()
+
+# otherwise create the app in the project
+
+approot=join(args.projhome,'apps',args.appname,args.appver)
 for platform in platforms:
     appfolder = join(approot,platform+'__vbox64_mt')
     makedirs(appfolder)
