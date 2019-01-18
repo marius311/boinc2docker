@@ -72,7 +72,6 @@ def add_create_work_args(parser,exclude=None):
     for k,v in sorted(create_work_args.items()):
         if exclude is None or k not in exclude:
             parser.add_argument('--%s'%k,type=v,metavar={int:'n',float:'x',str:'string'}[v])
-    parser.add_argument('--credit',type=float, metavar='x')
 
 
 def read_create_work_args(args):
@@ -81,6 +80,4 @@ def read_create_work_args(args):
     """
     if isinstance(args,argparse.Namespace): args=vars(args)
     cwargs = {k:v for k,v in args.items() if k in create_work_args and v is not None}
-    if args.get('credit'): 
-        cwargs['additional_xml'] = (args['additional_xml'] or '')+'<credit>%s</credit>'%args['credit']
     return cwargs
